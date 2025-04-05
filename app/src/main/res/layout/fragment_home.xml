@@ -15,6 +15,16 @@
         android:layout_marginTop="37dp"
         android:text="TextView" />
 
+    <TextView
+        android:id="@+id/tv_playlist_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="19dp"
+        android:layout_marginTop="277dp"
+        android:text="TextView" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_song"
         android:layout_width="wrap_content"
@@ -34,6 +44,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="55dp"
         android:layout_marginTop="326dp"
+        android:visibility="gone"
         android:text="Start" />
 
     <Button
@@ -44,6 +55,16 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="56dp"
         android:layout_marginTop="402dp"
+        android:visibility="gone"
         android:text="Stop" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_playlist_1"
+        android:layout_width="393dp"
+        android:layout_height="231dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="18dp"
+        android:layout_marginTop="307dp" />
 
 </RelativeLayout>

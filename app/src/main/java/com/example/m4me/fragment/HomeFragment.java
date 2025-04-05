@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
@@ -16,7 +17,9 @@ import android.widget.Button;
 
 import com.example.m4me.activity.MainActivity;
 import com.example.m4me.R;
+import com.example.m4me.adapter.PlaylistAdapter_Home_Horizontally;
 import com.example.m4me.adapter.SongAdapter_Home_Horizontally;
+import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -38,10 +41,14 @@ public class HomeFragment extends Fragment {
 
     private String mParam1;
     private String mParam2;
-    private RecyclerView rv_song;
+    private RecyclerView rv_song, rv_playlist_1;
     private FirebaseFirestore db = MainActivity.db;
     private List<Song> songList = new ArrayList<>();
+    private List<Playlist> playlistList = new ArrayList<>();
     Button btn_testService, btn_testServiceStop;
+
+    SongAdapter_Home_Horizontally adapterSong;
+    PlaylistAdapter_Home_Horizontally adapterPlaylist1;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -75,6 +82,7 @@ public class HomeFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
         rv_song = view.findViewById(R.id.rv_song);
+        rv_playlist_1 = view.findViewById(R.id.rv_playlist_1);
         btn_testService = view.findViewById(R.id.btn_testService);
         btn_testServiceStop = view.findViewById(R.id.btn_testServiceStop);
 
@@ -92,11 +100,16 @@ public class HomeFragment extends Fragment {
             }
         });
         
-        songList = getSongsFromDatabase();
 
         rv_song.setLayoutManager(new GridLayoutManager(getContext(),3, RecyclerView.HORIZONTAL, false));
-        SongAdapter_Home_Horizontally adapter = new SongAdapter_Home_Horizontally(getContext(), songList);
-        rv_song.setAdapter(adapter);
+        adapterSong = new SongAdapter_Home_Horizontally(getContext(), songList);
+        rv_song.setAdapter(adapterSong);
+        getSongsFromDatabase();
+
+        rv_playlist_1.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        adapterPlaylist1 = new PlaylistAdapter_Home_Horizontally(getContext(), playlistList);
+        rv_playlist_1.setAdapter(adapterPlaylist1);
+        getPlaylistsFromDatabase();
 
         return view;
     }
@@ -115,39 +128,63 @@ public class HomeFragment extends Fragment {
         getActivity().stopService(intent);
     }
 
-    private List<Song> getSongsFromDatabase(){
-        List<Song> songGet = new ArrayList<>();
+    private void getPlaylistsFromDatabase() {
+        db.collection("playlists")
+                .limit(6)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Playlist playlist = document.toObject(Playlist.class);
+
+                            DocumentReference tagRef = document.getDocumentReference("Tag");
+                            if (tagRef != null){
+                                tagRef.get().addOnSuccessListener(snapshot -> {
+                                    if(snapshot.exists()){
+                                        String tagName = snapshot.getString("Name");
+                                        playlist.setTagName(tagName);
+                                    }
+                                    adapterPlaylist1.notifyDataSetChanged();
+                                });
+                            } else {
+                                adapterPlaylist1.notifyDataSetChanged();
+                            }
+
+                            playlistList.add(playlist);
+                        }
+                    } else {
+                        Log.w("GetPlaylists", "Error getting documents.", task.getException());
+                    }
+                });
+    }
+
+    private void getSongsFromDatabase() {
         db.collection("songs")
                 .limit(6)
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d("GetSongs", document.getId() + " => " + document.getData());
-                                // document to object, kinda similar jsonParse
-                                Song song = document.toObject(Song.class);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Song song = document.toObject(Song.class);
 
-                                // getting artist name with referenced attribute
-                                DocumentReference artistRef = document.getDocumentReference("Artist");
-                                if (artistRef != null){
-                                    artistRef.get().addOnSuccessListener(snapshot -> {
-                                        if(snapshot.exists()){
-                                            String artistName = snapshot.getString("displayName");
-                                            song.setArtistName(artistName);
-                                        }
-                                        // tbh, idk why i should put it here
-                                        rv_song.getAdapter().notifyDataSetChanged();
-                                    });
-                                }
-                                songGet.add(song);
+                            DocumentReference artistRef = document.getDocumentReference("Artist");
+                            if (artistRef != null){
+                                artistRef.get().addOnSuccessListener(snapshot -> {
+                                    if(snapshot.exists()){
+                                        String artistName = snapshot.getString("displayName");
+                                        song.setArtistName(artistName);
+                                    }
+                                    adapterSong.notifyDataSetChanged();
+                                });
+                            } else {
+                                adapterSong.notifyDataSetChanged();
                             }
-                        } else {
-                            Log.w("GetSongs", "Error getting documents.", task.getException());
+
+                            songList.add(song);
                         }
+                    } else {
+                        Log.w("GetSongs", "Error getting documents.", task.getException());
                     }
                 });
-        return songGet;
     }
 }

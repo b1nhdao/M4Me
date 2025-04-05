@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_marginBottom="10dp"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/img_thumbnail"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="0dp"
+        android:padding="4dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tv_songTitle"
+        android:layout_width="287dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="6dp"
+        android:text="TextView"
+        android:textSize="16dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_songArtist"
+        android:layout_width="259dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="33dp"
+        android:layout_marginEnd="283dp"
+        android:text="TextView" />
+
+    <TextView
+        android:id="@+id/tv_playCounter"
+        android:layout_width="47dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="283dp"
+        android:text="54.9k" />
+
+    <TextView
+        android:id="@+id/tv_duration"
+        android:layout_width="46dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="130dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="283dp"
+        android:text="0:00" />
+
+    <ImageView
+        android:id="@+id/img_options"
+        android:layout_marginStart="370dp"
+        android:layout_marginTop="30dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/baseline_more_vert_24" />
+
+
+</androidx.cardview.widget.CardView>
