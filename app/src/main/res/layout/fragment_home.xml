@@ -21,8 +21,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="19dp"
-        android:layout_marginTop="277dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="319dp"
         android:text="TextView" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -64,7 +64,7 @@
         android:layout_height="231dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="18dp"
-        android:layout_marginTop="307dp" />
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="348dp" />
 
 </RelativeLayout>

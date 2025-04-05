@@ -14,11 +14,11 @@ public class Playlist implements Serializable {
 
     }
 
-    public Playlist(String ID, String title, String thumbnailURL, List<String> songs, String tagTitle) {
+    public Playlist(String ID, String title, String thumbnailURL, List<String> SongIDs, String tagTitle) {
         this.ID = ID;
         Title = title;
         ThumbnailURL = thumbnailURL;
-        this.SongIDs = songs;
+        this.SongIDs = SongIDs;
         TagName = tagTitle;
     }
 
@@ -46,12 +46,12 @@ public class Playlist implements Serializable {
         ThumbnailURL = thumbnailURL;
     }
 
-    public List<String> getSongs() {
+    public List<String> getSongIDs() {
         return SongIDs;
     }
 
-    public void setSongs(List<String> songs) {
-        this.SongIDs = songs;
+    public void setSongIDs(List<String> songIDs) {
+        this.SongIDs = songIDs;
     }
 
     public String getTagName() {
