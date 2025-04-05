@@ -22,6 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
+import androidx.media3.exoplayer.ExoPlayer;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -30,7 +33,6 @@ import com.example.m4me.R;
 import com.example.m4me.activity.MainActivity;
 import com.example.m4me.boardcastReceiver.MyReceiver;
 import com.example.m4me.model.Song;
-
 import java.io.IOException;
 
 public class MusicService extends Service {
@@ -40,9 +42,12 @@ public class MusicService extends Service {
     public static final int ACTION_CLEAR = 3;
     public static final int ACTION_START = 4;
 
+    private ExoPlayer exoPlayer;
+
     private MediaPlayer mediaPlayer;
     private boolean isPlaying;
     private Song mSong;
+    public static final String Channel_ID = "music_channel";
 
     public MusicService() {
     }
@@ -56,6 +61,14 @@ public class MusicService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d("Service", "Service onCreate");
+        exoPlayer = new ExoPlayer.Builder(this).build();
+        exoPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onIsPlayingChanged(boolean isPlayingNow) {
+                isPlaying = isPlayingNow;
+                sendNotification(mSong);
+            }
+        });
     }
 
     @Override
@@ -77,28 +90,18 @@ public class MusicService extends Service {
     }
 
     private void startMusic(String songUrl) {
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
+        if (exoPlayer != null) {
+            exoPlayer.stop();
+            exoPlayer.clearMediaItems();
         }
 
-        mediaPlayer = new MediaPlayer();
-        try {
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.setDataSource(songUrl);
-            mediaPlayer.prepareAsync();
-            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    mp.start();
-                    isPlaying = true;
-                    sendNotification(mSong);
-                    sendActionToActivity(ACTION_START);
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        MediaItem mediaItem = MediaItem.fromUri(songUrl);
+
+        exoPlayer.setMediaItem(mediaItem);
+        exoPlayer.prepare();
+        exoPlayer.play();
+        isPlaying = true;
+        sendActionToActivity(ACTION_START);
     }
 
     private void handleActionMusic(int action){
@@ -121,16 +124,16 @@ public class MusicService extends Service {
     }
 
     private void pauseMusic(){
-        if (mediaPlayer != null && isPlaying){
-            mediaPlayer.pause();
+        if (exoPlayer != null && exoPlayer.isPlaying()){
+            exoPlayer.pause();
             isPlaying = false;
             sendNotification(mSong);
         }
     }
 
     private void resumeMusic(){
-        if(mediaPlayer != null && !isPlaying){
-            mediaPlayer.start();
+        if(exoPlayer != null && !exoPlayer.isPlaying()){
+            exoPlayer.play();
             isPlaying = true;
             sendNotification(mSong);
         }
@@ -178,9 +181,9 @@ public class MusicService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d("Service", "Service onDestroy");
-        if(mediaPlayer != null){
-            mediaPlayer.release();
-            mediaPlayer = null;
+        if(exoPlayer != null){
+            exoPlayer.release();
+            exoPlayer = null;
         }
     }
 
