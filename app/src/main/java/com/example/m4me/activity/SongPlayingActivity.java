@@ -71,8 +71,10 @@ public class SongPlayingActivity extends AppCompatActivity {
             long currentPosition = intent.getLongExtra("current_position", 0);
             long duration = intent.getLongExtra("duration", 0);
 
-            Log.d("duration", "onReceive: " + duration);
+//            Log.d("duration", "onReceive: " + duration);
 
+
+//            update timer
             songDuration = (int) duration / 1000;
             tv_endTime.setText(formatTime(songDuration));
             tv_currentTime.setText(formatTime((int) currentPosition / 1000));
@@ -95,17 +97,17 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         initViews();
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
+
         Bundle bundle = getIntent().getExtras();
         if(bundle != null){
             songList = (List<Song>) bundle.get("list_object_song");
-            startMusicService(songList);
+            updateUIInitiate(songList.get(0));
         }
         else{
             Log.d("SongList", "no bundle found");
         }
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
-        LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
 
         startSeekBarUpdater();
 
@@ -172,14 +174,6 @@ public class SongPlayingActivity extends AppCompatActivity {
         });
     }
 
-    private void startMusicService(List<Song> songlist){
-        Intent intent = new Intent(SongPlayingActivity.this, MusicService.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("list_object_song", (Serializable) songList);
-        intent.putExtras(bundle);
-        ContextCompat.startForegroundService(SongPlayingActivity.this, intent);
-    }
-
     private void sendActionToService(int action){
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra("action_music_service", action);
@@ -210,6 +204,13 @@ public class SongPlayingActivity extends AppCompatActivity {
             tv_songTitle.setText(currentSong.getTitle());
             tv_endTime.setText(formatTime(songDuration));
         }
+    }
+
+//    idk why
+    private void updateUIInitiate(Song song){
+        Glide.with(this).load(song.getThumbnailUrl()).into(img_songThumbnail);
+        tv_songArtist.setText(song.getArtistName());
+        tv_songTitle.setText(song.getTitle());
     }
 
     private String formatTime(int duration) {
@@ -271,7 +272,7 @@ public class SongPlayingActivity extends AppCompatActivity {
             public void run() {
                 updateSeekBar();
 //                tv_currentTime.setText(formatTime(player.getCurrentPosition() / 1000));
-                handler.postDelayed(this, 1000); // cập nhật mỗi 1 giây
+                handler.postDelayed(this, 1000);
             }
         };
         handler.post(runnable);

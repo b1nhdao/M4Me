@@ -106,6 +106,7 @@ public class MusicService extends Service {
         if(bundle != null){
             Song song = (Song) bundle.get("object_song");
             if (song != null) {
+                mSongList = null;
                 mSong = song;
                 startMusic(mSong.getSourceURL());
                 sendNotification(mSong);
@@ -118,6 +119,8 @@ public class MusicService extends Service {
                 startMusic(mSong.getSourceURL());
                 sendNotification(mSong);
             }
+            String test = bundle.getString("key_test");
+            Log.d("test", "onStartCommand: " + test);
         }
 
         if ("get_current_position".equals(intent.getAction())) {
@@ -212,15 +215,30 @@ public class MusicService extends Service {
     }
 
     private void playNextSong(){
-        if (mSongList != null && currentSongIndex < mSongList.size() - 1) {
-            currentSongIndex++;
+        if (mSongList != null) {
+            if (currentSongIndex < mSongList.size() - 1){
+                currentSongIndex++;
+            }
+            else if (currentSongIndex == mSongList.size() - 1){
+                currentSongIndex = 0;
+            }
             mSong = mSongList.get(currentSongIndex);
             startMusic(mSong.getSourceURL());
             sendNotification(mSong);
             sendActionToActivity(ACTION_NEXT);
-        } else {
+        }
+        startMusic(mSong.getSourceURL());
+        sendNotification(mSong);
+        sendActionToActivity(ACTION_NEXT);
+    }
 
-            stopSelf();
+    private void playPreviousSong(){
+        if (mSongList != null && currentSongIndex > 0){
+            currentSongIndex--;
+            mSong = mSongList.get(currentSongIndex);
+            startMusic(mSong.getSourceURL());
+            sendNotification(mSong);
+            sendActionToActivity(ACTION_PREV);
         }
     }
 
@@ -235,16 +253,6 @@ public class MusicService extends Service {
                 isLooping = true;
             }
             sendActionToActivity(ACTION_LOOP);
-        }
-    }
-
-    private void playPreviousSong(){
-        if (mSongList != null && currentSongIndex > 0){
-            currentSongIndex--;
-            mSong = mSongList.get(currentSongIndex);
-            startMusic(mSong.getSourceURL());
-            sendNotification(mSong);
-            sendActionToActivity(ACTION_PREV);
         }
     }
 
