@@ -5,10 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -41,6 +44,10 @@ public class MainActivity extends AppCompatActivity {
     private ImageView img_song, img_play_or_pause, img_clear;
     private TextView tv_songTitle, tv_songArtist;
 
+    private SeekBar seekBar;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable runnable;
+
     private Song mSong;
     private boolean isPlaying;
 
@@ -56,6 +63,17 @@ public class MainActivity extends AppCompatActivity {
             int actionMusic = bundle.getInt("action_music");
 
             handleLayoutMusic(actionMusic);
+        }
+    };
+
+    private BroadcastReceiver seekbarReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            long currentPosition = intent.getLongExtra("current_position", 0);
+            long duration = intent.getLongExtra("duration", 0);
+
+            seekBar.setMax((int) duration);
+            seekBar.setProgress((int) currentPosition);
         }
     };
 
@@ -75,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
 
         loadFragment(new HomeFragment());
 
@@ -89,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         img_clear = findViewById(R.id.img_clear);
         tv_songArtist = findViewById(R.id.tv_songArtist);
         tv_songTitle = findViewById(R.id.tv_songTitle);
+        seekBar = findViewById(R.id.seekBar);
     }
 
     private void handleBottomNavigationBarClick(){
@@ -120,6 +140,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(seekbarReceiver);
+        handler.removeCallbacks(runnable);
     }
 
     private void handleLayoutMusic(int action){
@@ -128,17 +150,23 @@ public class MainActivity extends AppCompatActivity {
                 layout_bottom.setVisibility(View.VISIBLE);
                 showInfoSong();
                 setStatusButtonPlayOrPause();
+                startSeekBarUpdater();
                 break;
             case MusicService.ACTION_PAUSE:
+                isPlaying = false;
                 setStatusButtonPlayOrPause();
                 break;
             case MusicService.ACTION_RESUME:
+                isPlaying = true;
                 setStatusButtonPlayOrPause();
                 break;
             case MusicService.ACTION_CLEAR:
                 layout_bottom.setVisibility(View.INVISIBLE);
+                stopSeekBarUpdater();
+                break;
         }
     }
+
 
     private void showInfoSong(){
         if(mSong == null){
@@ -166,7 +194,55 @@ public class MainActivity extends AppCompatActivity {
                 sendActionToService(MusicService.ACTION_CLEAR);
             }
         });
+
+        startSeekBarUpdater();
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    sendActionToService(MusicService.ACTION_SEEK, progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
+
+//    SeekBar things
+
+    private void startSeekBarUpdater() {
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                updateSeekBar();
+                handler.postDelayed(this, 1000); // cập nhật mỗi 1 giây
+            }
+        };
+        handler.post(runnable);
+    }
+
+    private void stopSeekBarUpdater() {
+        if (handler != null && runnable != null) {
+            handler.removeCallbacks(runnable);
+        }
+    }
+
+    private void updateSeekBar() {
+        Intent intent = new Intent(this, MusicService.class);
+        intent.setAction("get_current_position");
+        startService(intent);
+    }
+
+//    End Seekbar things
 
     private void setStatusButtonPlayOrPause(){
         if(isPlaying){
@@ -180,6 +256,13 @@ public class MainActivity extends AppCompatActivity {
     private void sendActionToService(int action){
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra("action_music_service", action);
+        startService(intent);
+    }
+
+    private void sendActionToService(int action, int duration){
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra("action_music_service", action);
+        intent.putExtra("seek_position", duration);
         startService(intent);
     }
 }

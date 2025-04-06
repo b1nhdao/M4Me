@@ -81,6 +81,8 @@ public class HomeFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
+        db = FirebaseFirestore.getInstance();
+
         rv_song = view.findViewById(R.id.rv_song);
         rv_playlist_1 = view.findViewById(R.id.rv_playlist_1);
         btn_testService = view.findViewById(R.id.btn_testService);

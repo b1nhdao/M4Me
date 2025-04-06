@@ -34,19 +34,32 @@ import com.example.m4me.activity.MainActivity;
 import com.example.m4me.boardcastReceiver.MyReceiver;
 import com.example.m4me.model.Song;
 import java.io.IOException;
+import java.util.List;
 
 public class MusicService extends Service {
+
+    private int currentSongIndex = 0;
 
     public static final int ACTION_PAUSE = 1;
     public static final int ACTION_RESUME = 2;
     public static final int ACTION_CLEAR = 3;
     public static final int ACTION_START = 4;
+    public static final int ACTION_SEEK = 5;
+    public static final int ACTION_PREV = 6;
+    public static final int ACTION_NEXT = 7;
+    public static final int ACTION_LOOP = 8;
+    public static final int ACTION_SHUFFLE = 9;
+
+
 
     private ExoPlayer exoPlayer;
+
+    public static ExoPlayer exoPlayerInstance;
 
     private MediaPlayer mediaPlayer;
     private boolean isPlaying;
     private Song mSong;
+    private List<Song> mSongList;
     public static final String Channel_ID = "music_channel";
 
     public MusicService() {
@@ -62,11 +75,19 @@ public class MusicService extends Service {
         super.onCreate();
         Log.d("Service", "Service onCreate");
         exoPlayer = new ExoPlayer.Builder(this).build();
+        exoPlayerInstance = exoPlayer;
         exoPlayer.addListener(new Player.Listener() {
             @Override
             public void onIsPlayingChanged(boolean isPlayingNow) {
                 isPlaying = isPlayingNow;
                 sendNotification(mSong);
+            }
+
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if(playbackState == Player.STATE_ENDED){
+                    playNextSong();
+                }
             }
         });
     }
@@ -78,15 +99,34 @@ public class MusicService extends Service {
             Song song = (Song) bundle.get("object_song");
             if (song != null) {
                 mSong = song;
-                startMusic(song.getSourceURL());
-                sendNotification(song);
+                startMusic(mSong.getSourceURL());
+                sendNotification(mSong);
+            }
+            List<Song> songlist = (List<Song>) bundle.get("list_object_song");
+            if(songlist != null){
+                mSongList = songlist;
+                currentSongIndex = 0;
+                mSong = mSongList.get(currentSongIndex);
+                startMusic(mSong.getSourceURL());
+                sendNotification(mSong);
             }
         }
 
+        if ("get_current_position".equals(intent.getAction())) {
+            sendCurrentPositionToActivity();
+        }
+
         int actionMusic = intent.getIntExtra("action_music_service", 0);
-        handleActionMusic(actionMusic);
+        int seekToPosition = intent.getIntExtra("seek_position", -1);
+        handleActionMusic(actionMusic, seekToPosition);
+
+        Log.d("actionmusic:" , actionMusic + "");
 
         return START_NOT_STICKY;
+    }
+
+    public static ExoPlayer getExoPlayer() {
+        return exoPlayerInstance;
     }
 
     private void startMusic(String songUrl) {
@@ -104,7 +144,7 @@ public class MusicService extends Service {
         sendActionToActivity(ACTION_START);
     }
 
-    private void handleActionMusic(int action){
+    private void handleActionMusic(int action, int seekToPosition){
         switch (action){
             case ACTION_PAUSE:
                 pauseMusic();
@@ -119,6 +159,26 @@ public class MusicService extends Service {
             case ACTION_CLEAR:
                 stopSelf();
                 sendActionToActivity(ACTION_CLEAR);
+                break;
+
+            case ACTION_SEEK:
+                if (seekToPosition >= 0 && exoPlayer != null) {
+                    exoPlayer.seekTo(seekToPosition);
+                }
+                break;
+
+            case ACTION_NEXT:
+                playNextSong();
+                break;
+
+            case ACTION_PREV:
+                if (mSongList != null && currentSongIndex > 0) {
+                    currentSongIndex--;
+                    mSong = mSongList.get(currentSongIndex);
+                    startMusic(mSong.getSourceURL());
+                    sendNotification(mSong);
+                    sendActionToActivity(ACTION_PREV);
+                }
                 break;
         }
     }
@@ -136,6 +196,19 @@ public class MusicService extends Service {
             exoPlayer.play();
             isPlaying = true;
             sendNotification(mSong);
+        }
+    }
+
+    private void playNextSong(){
+        if (mSongList != null && currentSongIndex < mSongList.size() - 1) {
+            currentSongIndex++;
+            mSong = mSongList.get(currentSongIndex);
+            startMusic(mSong.getSourceURL());
+            sendNotification(mSong);
+            sendActionToActivity(ACTION_NEXT);
+        } else {
+            // Hết playlist, có thể dừng hoặc lặp tùy logic
+            stopSelf();
         }
     }
 
@@ -198,5 +271,22 @@ public class MusicService extends Service {
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
+
+    private void sendCurrentPositionToActivity() {
+        if (exoPlayer != null) {
+            Intent intent = new Intent("update_seekbar");
+            intent.putExtra("current_position", exoPlayer.getCurrentPosition());
+            intent.putExtra("duration", exoPlayer.getDuration());
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        }
+    }
+
+
+    private String formatTime(int millis) {
+        int minutes = (millis / 1000) / 60;
+        int seconds = (millis / 1000) % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
 }
 

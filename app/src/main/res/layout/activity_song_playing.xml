@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.PlaylistActivity">
+
+    <ImageView
+        android:id="@+id/img_songThumbnail"
+        android:layout_width="345dp"
+        android:layout_height="260dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="154dp"
+        android:layout_marginEnd="33dp"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tv_songTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="33dp"
+        android:layout_marginTop="92dp"
+        android:layout_marginEnd="34dp"
+        android:gravity="center"
+        android:text="TextView"
+        android:textSize="20dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_songArtist"
+        android:layout_width="109dp"
+        android:layout_height="30dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="150dp"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="151dp"
+        android:gravity="center"
+        android:text="TextView"
+        android:textSize="18dp" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="371dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="474dp"
+        android:layout_marginEnd="20dp" />
+
+    <TextView
+        android:id="@+id/tv_currentTime"
+        android:layout_width="33dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="452dp"
+        android:layout_marginEnd="357dp"
+        android:text="0:36" />
+
+    <TextView
+        android:id="@+id/tv_endTime"
+        android:layout_width="32dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="377dp"
+        android:layout_marginTop="452dp"
+        android:layout_marginEnd="2dp"
+        android:gravity="center"
+        android:text="3:36" />
+
+    <ImageView
+        android:id="@+id/img_play_or_pause"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="185dp"
+        android:layout_marginTop="504dp"
+        android:layout_marginEnd="185dp"
+        app:srcCompat="@drawable/pause_circle_24px" />
+
+    <ImageView
+        android:id="@+id/img_skip"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="296dp"
+        android:layout_marginTop="504dp"
+        android:layout_marginEnd="80dp"
+        app:srcCompat="@drawable/baseline_skip_24" />
+
+    <ImageView
+        android:id="@+id/img_forward"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="504dp"
+        android:layout_marginEnd="294dp"
+        app:srcCompat="@drawable/baseline_forward_24" />
+
+    <ImageView
+        android:id="@+id/img_favourite"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="591dp"
+        android:layout_marginEnd="325dp"
+        app:srcCompat="@drawable/baseline_favorite_border_24" />
+
+    <ImageView
+        android:id="@+id/img_comment"
+        android:layout_width="36dp"
+        android:layout_height="35dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="140dp"
+        android:layout_marginTop="594dp"
+        android:layout_marginEnd="233dp"
+        app:srcCompat="@drawable/baseline_comment_24" />
+
+    <ImageView
+        android:id="@+id/img_loop"
+        android:layout_width="40dp"
+        android:layout_height="39dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="231dp"
+        android:layout_marginTop="592dp"
+        android:layout_marginEnd="140dp"
+        app:srcCompat="@drawable/baseline_repeat_24" />
+
+    <ImageView
+        android:id="@+id/img_options"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="323dp"
+        android:layout_marginTop="591dp"
+        android:layout_marginEnd="50dp"
+        app:srcCompat="@drawable/baseline_settings_24" />
+
+</RelativeLayout>
