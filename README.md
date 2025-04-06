@@ -1,0 +1,3 @@
+- definitely not that music channel back in the 2010s (please dont sue me)
+- i know this project is a mess, please dont judge these lines of code, i have no idea what im doing atm
+- default account: a@a.com, A123456.
