@@ -1,5 +1,6 @@
 package com.example.m4me.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,10 +22,12 @@ import com.example.m4me.R;
 import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
+import com.example.m4me.service.MusicService;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +66,6 @@ public class PlaylistActivity extends AppCompatActivity {
             adapter = new SongAdapter_Playlist_Vertically(this, songList);
             rv_song.setLayoutManager(new LinearLayoutManager(this));
             rv_song.setAdapter(adapter);
-
             getSongsFromDatabaseByListSongIDs(playlist.getSongIDs());
         } else {
             Log.e("PlaylistActivity", "Playlist is null");
@@ -72,7 +75,7 @@ public class PlaylistActivity extends AppCompatActivity {
         btn_playNow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                clickChangeActivity(songList);
             }
         });
     }
@@ -83,6 +86,14 @@ public class PlaylistActivity extends AppCompatActivity {
         img_playlistThumbnail = findViewById(R.id.img_playlistThumbnail);
         img_playlistFavourite = findViewById(R.id.img_playlistFavourite);
         btn_playNow = findViewById(R.id.btn_playNow);
+    }
+
+    private void clickChangeActivity(List<Song> songList){
+        Intent intent = new Intent(PlaylistActivity.this, SongPlayingActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("list_object_song", (Serializable) songList);
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 
     private void getSongsFromDatabaseByListSongIDs(List<String> songsIDs){
@@ -107,6 +118,9 @@ public class PlaylistActivity extends AppCompatActivity {
 
                         songList.add(song);
                     }
+//                    for (Song song: songList) {
+//                        Log.w("GetSongs", song.getTitle());
+//                    }
                 } else {
                     Log.w("GetSongs", "Error getting documents.", task.getException());
                 }
