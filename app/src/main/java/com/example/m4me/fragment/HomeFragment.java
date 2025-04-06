@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,7 +26,9 @@ import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -131,33 +134,37 @@ public class HomeFragment extends Fragment {
     }
 
     private void getPlaylistsFromDatabase() {
-        db.collection("playlists")
-                .limit(6)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            Playlist playlist = document.toObject(Playlist.class);
-
-                            DocumentReference tagRef = document.getDocumentReference("Tag");
-                            if (tagRef != null){
-                                tagRef.get().addOnSuccessListener(snapshot -> {
-                                    if(snapshot.exists()){
-                                        String tagName = snapshot.getString("Name");
-                                        playlist.setTagName(tagName);
-                                    }
-                                    adapterPlaylist1.notifyDataSetChanged();
-                                });
-                            } else {
+        db.collection("playlists").limit(6).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                if (error != null){
+                    Log.w("Listen", "listen failed: " + error);
+                }
+                if (value != null){
+                    for (QueryDocumentSnapshot document : value) {
+                        Playlist playlist = document.toObject(Playlist.class);
+                        Log.w("Listen playlist", "data: " + playlist.getSongIDs());
+                        DocumentReference tagRef = document.getDocumentReference("Tag");
+                        if (tagRef != null){
+                            tagRef.get().addOnSuccessListener(snapshot -> {
+                                if(snapshot.exists()){
+                                    String tagName = snapshot.getString("Name");
+                                    playlist.setTagName(tagName);
+                                }
                                 adapterPlaylist1.notifyDataSetChanged();
-                            }
-
-                            playlistList.add(playlist);
+                            });
+                        } else {
+                            adapterPlaylist1.notifyDataSetChanged();
                         }
-                    } else {
-                        Log.w("GetPlaylists", "Error getting documents.", task.getException());
+
+                        playlistList.add(playlist);
                     }
-                });
+                }
+                else{
+                    Log.w("GetPlaylists", "Error getting documents. null");
+                }
+            }
+        });
     }
 
     private void getSongsFromDatabase() {
