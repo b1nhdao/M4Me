@@ -33,6 +33,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.m4me.R;
 import com.example.m4me.activity.MainActivity;
+import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.boardcastReceiver.MyReceiver;
 import com.example.m4me.model.Song;
 import java.io.IOException;
@@ -114,7 +115,7 @@ public class MusicService extends Service {
             List<Song> songlist = (List<Song>) bundle.get("list_object_song");
             if(songlist != null){
                 mSongList = songlist;
-                currentSongIndex = 0;
+                currentSongIndex = bundle.getInt("current_song_index", 0);
                 mSong = mSongList.get(currentSongIndex);
                 startMusic(mSong.getSourceURL());
                 sendNotification(mSong);
@@ -257,7 +258,11 @@ public class MusicService extends Service {
     }
 
     private void sendNotification(Song song) {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, SongPlayingActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("object_song", mSong);
+        intent.putExtras(bundle);
+
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification);

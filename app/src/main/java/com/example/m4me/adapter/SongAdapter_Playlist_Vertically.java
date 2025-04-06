@@ -8,29 +8,32 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
+import com.example.m4me.activity.PlaylistActivity;
 import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
+import com.example.m4me.service.MusicService;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAdapter_Playlist_Vertically.MyViewHolder> {
 
     Context context;
     List<Song> songList;
-    Playlist playlist;
 
-    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList, Playlist playlist) {
+    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList) {
         this.context = context;
         this.songList = songList;
-        this.playlist = playlist;
     }
 
     @NonNull
@@ -51,16 +54,28 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                int currentSongIndex = position;
+                Toast.makeText(context, "clicked", Toast.LENGTH_SHORT).show();
+                startMusicService(currentSongIndex);
+                clickChangeActivity(song);
             }
         });
     }
 
-    private void itemSongClick(Playlist playlist, int currentSongIndex){
+    private void startMusicService(int currentSongIndex){
+        Intent intent = new Intent(context, MusicService.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("list_object_song", (Serializable) songList);
+        bundle.putInt("current_song_index", currentSongIndex);
+        intent.putExtras(bundle);
+        ContextCompat.startForegroundService(context, intent);
+    }
+
+    private void clickChangeActivity(Song song){
         Intent intent = new Intent(context, SongPlayingActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putSerializable("list_object_song", playlist);
-        bundle.putInt("current_song_index", currentSongIndex);
+        bundle.putSerializable("list_object_song", (Serializable) songList);
+        bundle.putSerializable("object_song", song);
         intent.putExtras(bundle);
         context.startActivity(intent);
     }

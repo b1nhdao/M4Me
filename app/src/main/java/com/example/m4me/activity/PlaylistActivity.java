@@ -69,7 +69,7 @@ public class PlaylistActivity extends AppCompatActivity {
             tv_playlistTitle.setText(playlist.getTitle());
             Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
 
-            adapter = new SongAdapter_Playlist_Vertically(this, songList, playlist);
+            adapter = new SongAdapter_Playlist_Vertically(this, songList);
             rv_song.setLayoutManager(new LinearLayoutManager(this));
             rv_song.setAdapter(adapter);
 
@@ -101,6 +101,7 @@ public class PlaylistActivity extends AppCompatActivity {
         Intent intent = new Intent(PlaylistActivity.this, SongPlayingActivity.class);
         Bundle bundle = new Bundle();
         bundle.putSerializable("list_object_song", (Serializable) songList);
+        bundle.putSerializable("object_song", songList.get(0));
         intent.putExtras(bundle);
         startActivity(intent);
     }
@@ -111,7 +112,7 @@ public class PlaylistActivity extends AppCompatActivity {
         bundle.putSerializable("list_object_song", (Serializable) songList);
 //        bundle.putString("key_test", "alicia meu");
         intent.putExtras(bundle);
-        ContextCompat.startForegroundService(PlaylistActivity.this, intent);
+        startService(intent);
     }
 
     private void getPlaylistFromDatabaseByPlaylistID(String playlistID){

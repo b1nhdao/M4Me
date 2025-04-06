@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             mSong = (Song) bundle.get("object_song");
-            isPlaying = (boolean) bundle.getBoolean("status_player");
+            isPlaying = bundle.getBoolean("status_player");
             int actionMusic = bundle.getInt("action_music");
 
             handleLayoutMusic(actionMusic);
@@ -94,6 +94,17 @@ public class MainActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
+
+        layout_bottom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SongPlayingActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("object_song", mSong);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
 
         loadFragment(new HomeFragment());
 

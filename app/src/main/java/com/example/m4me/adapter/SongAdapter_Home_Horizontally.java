@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -24,11 +23,11 @@ import java.util.List;
 public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdapter_Home_Horizontally.MyViewHolder> {
 
     private Context context;
-    private List<Song> listSong;
+    private List<Song> songList;
 
-    public SongAdapter_Home_Horizontally(Context context, List<Song> listSong) {
+    public SongAdapter_Home_Horizontally(Context context, List<Song> songList) {
         this.context = context;
-        this.listSong = listSong;
+        this.songList = songList;
     }
 
     @NonNull
@@ -40,7 +39,7 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        Song song = listSong.get(position);
+        Song song = songList.get(position);
         holder.tv_songTitle.setText(song.getTitle());
         holder.tv_artistName.setText(song.getArtistName());
         Glide.with(context)
@@ -71,7 +70,7 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
 
     @Override
     public int getItemCount() {
-        return listSong.size();
+        return songList.size();
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {

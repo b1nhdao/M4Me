@@ -103,7 +103,8 @@ public class SongPlayingActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if(bundle != null){
             songList = (List<Song>) bundle.get("list_object_song");
-            updateUIInitiate(songList.get(0));
+            currentSong = (Song) bundle.get("object_song");
+            updateUIInitiate(currentSong);
         }
         else{
             Log.d("SongList", "no bundle found");
