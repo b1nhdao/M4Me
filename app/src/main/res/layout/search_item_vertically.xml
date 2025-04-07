@@ -3,36 +3,45 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cardView"
-    android:layout_width="135dp"
+    android:layout_width="match_parent"
     android:layout_marginBottom="10dp"
-    android:layout_marginRight="10dp"
-    android:padding="10dp"
     android:layout_height="wrap_content">
 
     <ImageView
         android:id="@+id/img_thumbnail"
-        android:layout_width="match_parent"
-        android:layout_height="126dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginStart="0dp"
         android:layout_marginTop="0dp"
         android:padding="4dp"
-        android:scaleType="fitXY"
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
-        android:id="@+id/tv_playlistTitle"
-        android:layout_width="132dp"
+        android:id="@+id/tv_title"
+        android:layout_width="287dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="126dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="6dp"
         android:text="TextView"
         android:textSize="16dp"
         android:textStyle="bold" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_tags"
-        android:layout_width="match_parent"
-        android:layout_height="21dp"
-        android:layout_marginTop="170dp" />
+        android:layout_width="286dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="34dp"
+        android:layout_marginEnd="283dp" />
+
+    <TextView
+        android:id="@+id/tv_songArtist"
+        android:layout_width="282dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="59dp"
+        android:layout_marginEnd="283dp"
+        android:text="" />
+
 
 </androidx.cardview.widget.CardView>

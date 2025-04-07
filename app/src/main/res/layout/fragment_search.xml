@@ -1,14 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragment.SearchFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="search" />
+    <EditText
+        android:id="@+id/edt_keyword"
+        android:layout_width="269dp"
+        android:layout_height="41dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="37dp"
+        android:layout_marginEnd="98dp"
+        android:background="@drawable/custom_input_1"
+        android:ems="10"
+        android:hint="Tìm kiếm ..."
+        android:inputType="text"
+        android:paddingStart="10dp"
+        android:textSize="20sp" />
 
-</FrameLayout>
+    <ImageView
+        android:id="@+id/img_search"
+        android:layout_width="46dp"
+        android:layout_height="43dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="333dp"
+        android:layout_marginTop="35dp"
+        android:layout_marginEnd="32dp"
+        android:src="@drawable/baseline_search_24" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_result"
+        android:layout_width="match_parent"
+        android:layout_height="496dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="149dp" />
+
+    <ToggleButton
+        android:id="@+id/tgbtn_playlist"
+        android:layout_width="70dp"
+        android:layout_height="30dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="317dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/custom_toggle_button"
+        android:textOff="playlist"
+        android:textOn="Playlist" />
+
+    <ToggleButton
+        android:id="@+id/tgbtn_song"
+        android:layout_width="70dp"
+        android:layout_height="30dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="319dp"
+        android:background="@drawable/custom_toggle_button"
+        android:text="ToggleButton"
+        android:textOff="Bài hát"
+        android:textOn="Bài hát"
+        />
+
+    <ToggleButton
+        android:id="@+id/tgbtn_album"
+        android:layout_width="70dp"
+        android:layout_height="30dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="221dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="120dp"
+        android:background="@drawable/custom_toggle_button"
+        android:textOff="Album"
+        android:textOn="Album" />
+
+    <ToggleButton
+        android:id="@+id/tgbtn_user"
+        android:layout_width="70dp"
+        android:layout_height="30dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="119dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginEnd="222dp"
+        android:background="@drawable/custom_toggle_button"
+        android:textOff="USER"
+        android:textOn="USER" />
+
+</RelativeLayout>
