@@ -34,6 +34,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -91,21 +92,6 @@ public class HomeFragment extends Fragment {
         btn_testService = view.findViewById(R.id.btn_testService);
         btn_testServiceStop = view.findViewById(R.id.btn_testServiceStop);
 
-        btn_testService.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickStartService();
-            }
-        });
-
-        btn_testServiceStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickStopService();
-            }
-        });
-        
-
         rv_song.setLayoutManager(new GridLayoutManager(getContext(),3, RecyclerView.HORIZONTAL, false));
         adapterSong = new SongAdapter_Home_Horizontally(getContext(), songList);
         rv_song.setAdapter(adapterSong);
@@ -119,21 +105,8 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
-    private void clickStartService(){
-        Song song = new Song("title", "ca si", "https://i.scdn.co/image/ab67616d00001e02a1bc26cdd8eecd89da3adc39", "https://fupkxjtaokejquyotrgc.supabase.co/storage/v1/object/sign/songs/Dunglamtraitimanhdau.mp3?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzb25ncy9EdW5nbGFtdHJhaXRpbWFuaGRhdS5tcDMiLCJpYXQiOjE3MzIwMDQ0NjksImV4cCI6MTc2MzU0MDQ2OX0.H0Sy82U2VBm1UQLMl-NbQRlMknAsL1q_k9z2_9Z3u0k&t=2024-11-19T08%3A21%3A22.287Z");
-        Intent intent = new Intent(getActivity(), MusicService.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("object_song", song);
-        intent.putExtras(bundle);
-        getActivity().startService(intent);
-    }
-
-    private void clickStopService(){
-        Intent intent = new Intent(getActivity(), MusicService.class);
-        getActivity().stopService(intent);
-    }
-
     private void getPlaylistsFromDatabase() {
+        playlistList.clear();
         db.collection("playlists").limit(6).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
@@ -144,16 +117,38 @@ public class HomeFragment extends Fragment {
                     for (QueryDocumentSnapshot document : value) {
                         Playlist playlist = document.toObject(Playlist.class);
                         Log.w("Listen playlist", "data: " + playlist.getSongIDs());
-                        DocumentReference tagRef = document.getDocumentReference("Tag");
-                        if (tagRef != null){
-                            tagRef.get().addOnSuccessListener(snapshot -> {
-                                if(snapshot.exists()){
-                                    String tagName = snapshot.getString("Name");
-                                    playlist.setTagName(tagName);
-                                }
-                                adapterPlaylist1.notifyDataSetChanged();
-                            });
-                        } else {
+
+                        List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
+                        if (tagRefs != null && !tagRefs.isEmpty()) {
+                            List<String> tagNames = new ArrayList<>();
+                            AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
+
+                            for (DocumentReference tagReference : tagRefs) {
+                                tagReference.get().addOnSuccessListener(tagSnapshot -> {
+                                    if (tagSnapshot.exists()) {
+                                        String tagName = tagSnapshot.getString("Name");
+                                        if (tagName != null) {
+                                            tagNames.add(tagName);
+                                        }
+//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
+                                    }
+
+                                    // Check if all tag requests are completed
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        playlist.setTagNames(tagNames);
+                                        adapterSong.notifyDataSetChanged();
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    Log.e("GetTags", "Error getting tag: ", e);
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        playlist.setTagNames(tagNames);
+                                        adapterSong.notifyDataSetChanged();
+                                    }
+                                });
+                            }
+                        }
+                        else {
+                            playlist.setTagNames(new ArrayList<>());
                             adapterPlaylist1.notifyDataSetChanged();
                         }
 
@@ -176,6 +171,7 @@ public class HomeFragment extends Fragment {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Song song = document.toObject(Song.class);
 
+                            // Handle Artist reference
                             DocumentReference artistRef = document.getDocumentReference("Artist");
                             if (artistRef != null){
                                 artistRef.get().addOnSuccessListener(snapshot -> {
@@ -185,10 +181,41 @@ public class HomeFragment extends Fragment {
                                     }
                                     adapterSong.notifyDataSetChanged();
                                 });
-                            } else {
-                                adapterSong.notifyDataSetChanged();
                             }
 
+                            // get tags references
+                            List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
+                            if (tagRefs != null && !tagRefs.isEmpty()) {
+                                List<String> tagNames = new ArrayList<>();
+                                AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
+
+                                for (DocumentReference tagRef : tagRefs) {
+                                    tagRef.get().addOnSuccessListener(tagSnapshot -> {
+                                        if (tagSnapshot.exists()) {
+                                            String tagName = tagSnapshot.getString("Name");
+                                            if (tagName != null) {
+                                                tagNames.add(tagName);
+                                            }
+//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
+                                        }
+
+                                        // Check if all tag requests are completed
+                                        if (pendingTags.decrementAndGet() == 0) {
+                                            song.setTagNames(tagNames);
+                                            adapterSong.notifyDataSetChanged();
+                                        }
+                                    }).addOnFailureListener(e -> {
+                                        Log.e("GetTags", "Error getting tag: ", e);
+                                        if (pendingTags.decrementAndGet() == 0) {
+                                            song.setTagNames(tagNames);
+                                            adapterSong.notifyDataSetChanged();
+                                        }
+                                    });
+                                }
+                            } else {
+                                song.setTagNames(new ArrayList<>());
+                            }
+//                            Log.d("GetSong", "getSongsFromDatabase: ", song.getTagNames()));
                             songList.add(song);
                         }
                     } else {

@@ -1,6 +1,7 @@
 package com.example.m4me.model;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Song implements Serializable {
     String ID;
@@ -9,30 +10,27 @@ public class Song implements Serializable {
     int PlayedCounter;
     String ThumbnailUrl;
     String SourceURL;
+    List<String> TagNames;
 
-    public Song(String ID, String title, String artistName, int playedCounter, String thumbnailUrl, String sourceURL) {
+    public Song(String ID, String title, String artistName, int playedCounter, String thumbnailUrl, String sourceURL, List<String> tagNames) {
         this.ID = ID;
         Title = title;
         ArtistName = artistName;
         PlayedCounter = playedCounter;
         ThumbnailUrl = thumbnailUrl;
         SourceURL = sourceURL;
-    }
-
-    public Song(String title, String artistName, String thumbnailUrl) {
-        Title = title;
-        ArtistName = artistName;
-        ThumbnailUrl = thumbnailUrl;
-    }
-
-    public Song(String title, String artistName, String thumbnailUrl, String sourceURL) {
-        Title = title;
-        ArtistName = artistName;
-        ThumbnailUrl = thumbnailUrl;
-        SourceURL = sourceURL;
+        TagNames = tagNames;
     }
 
     public Song() {
+    }
+
+    public List<String> getTagNames() {
+        return TagNames;
+    }
+
+    public void setTagNames(List<String> tagNames) {
+        TagNames = tagNames;
     }
 
     public String getID() {

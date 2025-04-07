@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -40,7 +41,7 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Song song = songList.get(position);
-        holder.tv_songTitle.setText(song.getTitle());
+        holder.tv_songTitle.setText(shortenString(song.getTitle(), 28));
         holder.tv_artistName.setText(song.getArtistName());
         Glide.with(context)
                 .load(song.getThumbnailUrl())
@@ -51,11 +52,21 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
                 clickStartService(song);
             }
         });
+
+        List<String> tags = song.getTagNames();
+        if (tags != null && !tags.isEmpty()) {
+            TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, tags);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
+            holder.rv_tags.setLayoutManager(layoutManager);
+            holder.rv_tags.setAdapter(tagAdapter);
+        } else {
+            holder.rv_tags.setAdapter(null);
+        }
     }
 
-    private String shortenString(String s){
-        if (s.length() >= 32){
-            return s.substring(0,32) + "...";
+    private String shortenString(String s, int charMaxLength){
+        if (s.length() >= charMaxLength){
+            return s.substring(0,charMaxLength) + "...";
         }
         return s;
     }
@@ -76,7 +87,8 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
     class MyViewHolder extends RecyclerView.ViewHolder {
         private CardView cardView;
         private ImageView img_thumbnail;
-        private TextView tv_songTitle, tv_artistName;
+        private TextView tv_songTitle, tv_artistName, tv_tags;
+        private RecyclerView rv_tags;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -84,6 +96,7 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
             img_thumbnail = itemView.findViewById(R.id.img_thumbnail);
             tv_songTitle = itemView.findViewById(R.id.tv_songTitle);
             tv_artistName = itemView.findViewById(R.id.tv_songArtist);
+            rv_tags = itemView.findViewById(R.id.rv_tags);
         }
     }
 }
