@@ -130,28 +130,25 @@ public class HomeFragment extends Fragment {
                                         if (tagName != null) {
                                             tagNames.add(tagName);
                                         }
-//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
                                     }
 
                                     // Check if all tag requests are completed
                                     if (pendingTags.decrementAndGet() == 0) {
                                         playlist.setTagNames(tagNames);
-                                        adapterSong.notifyDataSetChanged();
+                                        adapterPlaylist1.notifyDataSetChanged();
                                     }
                                 }).addOnFailureListener(e -> {
                                     Log.e("GetTags", "Error getting tag: ", e);
                                     if (pendingTags.decrementAndGet() == 0) {
                                         playlist.setTagNames(tagNames);
-                                        adapterSong.notifyDataSetChanged();
+                                        adapterPlaylist1.notifyDataSetChanged();
                                     }
                                 });
                             }
                         }
                         else {
                             playlist.setTagNames(new ArrayList<>());
-                            adapterPlaylist1.notifyDataSetChanged();
                         }
-
                         playlistList.add(playlist);
                     }
                 }
