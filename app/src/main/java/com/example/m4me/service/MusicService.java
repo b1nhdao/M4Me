@@ -266,7 +266,7 @@ public class MusicService extends Service {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.custom_notification);
-        remoteViews.setTextViewText(R.id.tv_songTitle, song.getTitle());
+        remoteViews.setTextViewText(R.id.tv_songTitle, shortenString(song.getTitle(), 20));
         remoteViews.setTextViewText(R.id.tv_songArtist, song.getArtistName());
         remoteViews.setImageViewResource(R.id.img_play_or_pause, R.drawable.pause_circle_24px);
         remoteViews.setImageViewResource(R.id.img_clear, R.drawable.close_24px);
@@ -290,13 +290,34 @@ public class MusicService extends Service {
                 .setSound(null)
                 .build();
 
-        startForeground(1, notification);
+
+        Glide.with(getApplicationContext())
+                .asBitmap()
+                .load(song.getThumbnailUrl())
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        remoteViews.setImageViewBitmap(R.id.img_song, resource);
+                        startForeground(1, notification);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                });
+    }
+
+    private String shortenString(String s, int charMaxLength){
+        if (s.length() >= charMaxLength){
+            return s.substring(0,charMaxLength) + "...";
+        }
+        return s;
     }
 
     private PendingIntent getPendingIntent(Context context, int action){
         Intent intent = new Intent(this, MyReceiver.class);
         intent.putExtra("action_music", action);
-        return PendingIntent.getBroadcast(context.getApplicationContext(), action, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(context, action, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     @Override
