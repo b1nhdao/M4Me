@@ -21,6 +21,7 @@ import com.example.m4me.activity.PlaylistActivity;
 import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
+import com.example.m4me.model.User;
 import com.example.m4me.service.MusicService;
 
 import java.util.List;
@@ -29,12 +30,14 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
 
     public enum Type {
         SONG,
-        PLAYLIST
+        PLAYLIST,
+        USER
     }
 
     private Context context;
     private List<Song> songList;
     private List<Playlist> playlistList;
+    private List<User> userList;
     private Type type;
 
     public SearchItemAdapter_Search_Vertically(Context context, Object dataList, Type type) {
@@ -45,6 +48,8 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
             this.songList = (List<Song>) dataList;
         } else if (type == Type.PLAYLIST) {
             this.playlistList = (List<Playlist>) dataList;
+        } else if (type == Type.USER) {
+            this.userList = (List<User>) dataList;
         }
     }
 
@@ -107,6 +112,20 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
                 });
 
                 break;
+
+            case USER:
+                User user = userList.get(position);
+                holder.tv_title.setText(user.getDisplayName());
+                holder.tv_songArtist.setText(user.getEmail());
+
+                holder.cardView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+//                        TODO: open UserActivity
+                    }
+                });
+
+                break;
         }
     }
 
@@ -148,6 +167,8 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
                 return songList.size();
             case PLAYLIST:
                 return playlistList.size();
+            case USER:
+                return userList.size();
             default:
                 return 0;
         }
