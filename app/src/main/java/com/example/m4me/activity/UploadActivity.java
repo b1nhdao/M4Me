@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -27,9 +28,20 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.m4me.R;
+import com.example.m4me.model.Song;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
 
 public class UploadActivity extends AppCompatActivity {
 
@@ -43,6 +55,10 @@ public class UploadActivity extends AppCompatActivity {
 
     String thumbnailURL = "";
     String songURL = "";
+
+    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private static final String TAG = "cloudinary";
 
@@ -81,13 +97,11 @@ public class UploadActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (audioUri != null){
                     uploadCloudinarySong();
-                    if (imageUri != null){
-                        uploadCloudinaryImage();
-                    }
                 }
                 else {
-                    Toast.makeText(UploadActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(UploadActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
                 }
+
             }
         });
     }
@@ -102,6 +116,46 @@ public class UploadActivity extends AppCompatActivity {
         btn_pickSong = findViewById(R.id.btn_pickSong);
         btn_uploadSong = findViewById(R.id.btn_uploadSong);
         img_thumbnail = findViewById(R.id.img_thumbnail);
+    }
+
+    private void uploadDataToFirebase(String sourceURL, String thumbnailURL, String title){
+        DocumentReference artistRef = db.collection("users").document(user.getUid());
+
+        ArrayList<DocumentReference> tagRefs = new ArrayList<>();
+
+//        creating song document with all fields;
+        Map<String, Object> song = new HashMap<>();
+        song.put("Artist", artistRef);
+        song.put("ArtistName", user.getDisplayName());
+        song.put("ID", generateRandomString(12));
+        song.put("PlayedCounter", 0);
+        song.put("SourceURL", sourceURL);
+        song.put("Tags", tagRefs);
+        song.put("ThumbnailUrl", thumbnailURL);
+        song.put("Title", title);
+
+        db.collection("songs").document(generateRandomString(12)).set(song).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d("Upload firebase", "DocumentSnapshot successfully written!");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.w("Upload firebase", "Error writing document", e);
+            }
+        });
+    }
+
+    private String generateRandomString(int length){
+        String allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random rand=new Random();
+        StringBuilder res=new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int randIndex=rand.nextInt(allowedChars.length());
+            res.append(allowedChars.charAt(randIndex));
+        }
+        return res.toString();
     }
 
     private void uploadCloudinaryImage(){
@@ -121,6 +175,7 @@ public class UploadActivity extends AppCompatActivity {
             public void onSuccess(String requestId, Map resultData) {
                 thumbnailURL = (String) resultData.get("secure_url");
                 Toast.makeText(UploadActivity.this, "Upload thành công", Toast.LENGTH_SHORT).show();
+                uploadDataToFirebase(songURL, thumbnailURL, edt_title.getText().toString());
                 Log.d(TAG, "onSuccess thumbnail:  " + thumbnailURL);
             }
 
@@ -152,6 +207,12 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String requestId, Map resultData) {
                 songURL = (String) resultData.get("secure_url");
+                if(imageUri != null){
+                    uploadCloudinaryImage();
+                }
+                else {
+                    uploadDataToFirebase(songURL, thumbnailURL, edt_title.getText().toString());
+                }
                 Toast.makeText(UploadActivity.this, "Upload thành công", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onSuccess song: " + songURL);
             }
@@ -189,6 +250,7 @@ public class UploadActivity extends AppCompatActivity {
                 audioUri = data.getData();
                 String fileName = getFileNameFromUri(this, audioUri);
                 tv_fileNameSong.setText(fileName);
+                edt_title.setText(fileName);
                 Log.d("FILE_NAME", "Tên file: " + fileName);
             }
         }
