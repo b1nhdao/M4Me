@@ -106,7 +106,6 @@ public class HomeFragment extends Fragment {
     }
 
     private void getPlaylistsFromDatabase() {
-        playlistList.clear();
         db.collection("playlists").limit(6).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
@@ -114,6 +113,7 @@ public class HomeFragment extends Fragment {
                     Log.w("Listen", "listen failed: " + error);
                 }
                 if (value != null){
+                    playlistList.clear();
                     for (QueryDocumentSnapshot document : value) {
                         Playlist playlist = document.toObject(Playlist.class);
                         Log.w("Listen playlist", "data: " + playlist.getSongIDs());
@@ -130,28 +130,25 @@ public class HomeFragment extends Fragment {
                                         if (tagName != null) {
                                             tagNames.add(tagName);
                                         }
-//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
                                     }
 
                                     // Check if all tag requests are completed
                                     if (pendingTags.decrementAndGet() == 0) {
                                         playlist.setTagNames(tagNames);
-                                        adapterSong.notifyDataSetChanged();
+                                        adapterPlaylist1.notifyDataSetChanged();
                                     }
                                 }).addOnFailureListener(e -> {
                                     Log.e("GetTags", "Error getting tag: ", e);
                                     if (pendingTags.decrementAndGet() == 0) {
                                         playlist.setTagNames(tagNames);
-                                        adapterSong.notifyDataSetChanged();
+                                        adapterPlaylist1.notifyDataSetChanged();
                                     }
                                 });
                             }
                         }
                         else {
                             playlist.setTagNames(new ArrayList<>());
-                            adapterPlaylist1.notifyDataSetChanged();
                         }
-
                         playlistList.add(playlist);
                     }
                 }
