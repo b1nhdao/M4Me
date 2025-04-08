@@ -182,24 +182,18 @@ public class SearchFragment extends Fragment {
         return "Maybe something wrong, please just choose a category that you want to search again :D";
     }
 
-    // i know you will laugh at me when i have 4 (actually 3 cuz "Album" doesnt even exist) different functions to fetch data
+    // i know you will laugh at me when i have 4 different functions to fetch data
 
     private void getPlaylistsFromDatabaseByKeyword(String keyword){
-        playlistList.clear();
         String keywordLower = keyword.toLowerCase();
-
-        db.collection("playlists").addSnapshotListener(new EventListener<QuerySnapshot>() {
+        db.collection("playlists").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (error != null){
-                    Log.d("getSongsByKeyword", "failed: ", error);
-                }
-                if (value != null){
-                    for (QueryDocumentSnapshot document : value) {
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if(task.isSuccessful()){
+                    playlistList.clear();
+                    for (QueryDocumentSnapshot document : task.getResult()){
                         Playlist playlist = document.toObject(Playlist.class);
                         String playlistTitleLower = playlist.getTitle().toLowerCase();
-
-//                        Log.w("Listen playlist", "data: " + playlist.getTitle());
 
                         if (playlistTitleLower.contains(keywordLower)){
                             List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
@@ -233,36 +227,31 @@ public class SearchFragment extends Fragment {
                             } // check if tagRef null
                             else {
                                 playlist.setTagNames(new ArrayList<>());
-                                adapter.notifyDataSetChanged();
                             }
                             playlistList.add(playlist);
+                            if (playlistList.size() == task.getResult().size()){
+                                adapter.notifyDataSetChanged();
+                            }
                         } // check if contain keyword
-                    } // loop document
-                } // if value != null
-                else{
-                    Log.w("GetPlaylists", "Error getting documents. null");
-                }
+
+                    } // end for loop getting document in value
+                } // end check if task
             }
         });
     }
 
     private void getSongsFromDatabaseByKeyword(String keyword){
-
         String keywordLower = keyword.toLowerCase();
-
-        db.collection("songs").addSnapshotListener(new EventListener<QuerySnapshot>() {
+        db.collection("songs").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (error != null){
-                    Log.d("getSongsByKeyword", "failed: ", error);
-                }
-                if (value != null){
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
                     songList.clear();
-                    for (QueryDocumentSnapshot document : value) {
+                    for (QueryDocumentSnapshot document : task.getResult()){
                         Song song = document.toObject(Song.class);
-                        String playlistTitleLower = song.getTitle().toLowerCase();
+                        String songTitleToLower = song.getTitle().toLowerCase();
 
-                        if (playlistTitleLower.contains(keywordLower)){
+                        if (songTitleToLower.contains(keywordLower)){
                             List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
                             if (tagRefs != null && !tagRefs.isEmpty()) {
                                 List<String> tagNames = new ArrayList<>();
@@ -294,18 +283,18 @@ public class SearchFragment extends Fragment {
                             } // check if tagRef null
                             else {
                                 song.setTagNames(new ArrayList<>());
-                                adapter.notifyDataSetChanged();
                             }
                             songList.add(song);
+                            if(songList.size() == task.getResult().size()){
+                                adapter.notifyDataSetChanged();
+                            }
                         } // check if contain keyword
-                    } // loop document
-                } // if value != null
-                else{
-                    Log.w("GetPlaylists", "Error getting documents. null");
+                    } // end for loop getting doc in value
                 }
             }
         });
     }
+
 
     public void getSongsFromDatabaseByTagID(String tagID){
         DocumentReference tagRef = db.collection("tags").document(tagID);
@@ -377,8 +366,6 @@ public class SearchFragment extends Fragment {
 
 
     // once again, thanks chatGPT (it sucks)
-    // for making things more and more complicated
-    // but idc, it works
     private void querySongsWithMultipleTags(List<DocumentReference> tagRefs) {
         db.collection("songs")
                 .whereArrayContainsAny("Tags", tagRefs)

@@ -106,7 +106,6 @@ public class HomeFragment extends Fragment {
     }
 
     private void getPlaylistsFromDatabase() {
-        playlistList.clear();
         db.collection("playlists").limit(6).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
@@ -114,6 +113,7 @@ public class HomeFragment extends Fragment {
                     Log.w("Listen", "listen failed: " + error);
                 }
                 if (value != null){
+                    playlistList.clear();
                     for (QueryDocumentSnapshot document : value) {
                         Playlist playlist = document.toObject(Playlist.class);
                         Log.w("Listen playlist", "data: " + playlist.getSongIDs());
