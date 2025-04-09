@@ -1,6 +1,8 @@
 package com.example.m4me.adapter;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
 import com.example.m4me.model.Song;
+import com.example.m4me.service.MusicService;
 
 import java.util.List;
 
@@ -41,6 +44,20 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         holder.tv_songTitle.setText(shortenString(song.getTitle()));
         holder.tv_songArtist.setText(song.getArtistName());
         holder.tv_playCounter.setText(song.getPlayedCounter() + "");
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickStartService(song);
+            }
+        });
+    }
+
+    private void clickStartService(Song song){
+        Intent intent = new Intent(context, MusicService.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("object_song", song);
+        intent.putExtras(bundle);
+        context.startService(intent);
     }
 
     private String shortenString(String s){
@@ -66,6 +83,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             tv_songArtist = itemView.findViewById(R.id.tv_songArtist);
             tv_playCounter = itemView.findViewById(R.id.tv_playCounter);
             tv_duration = itemView.findViewById(R.id.tv_duration);
+            cardView = itemView.findViewById(R.id.cardView);
         }
     }
 }
