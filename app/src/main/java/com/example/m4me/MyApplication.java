@@ -4,6 +4,12 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
+import android.util.Log;
+
+import com.cloudinary.android.MediaManager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MyApplication extends Application {
     public static final String CHANNEL_ID = "channel_service";
@@ -13,6 +19,7 @@ public class MyApplication extends Application {
         super.onCreate();
 
         createChannelNotification();
+        initConfig();
     }
 
     private void createChannelNotification() {
@@ -25,6 +32,19 @@ public class MyApplication extends Application {
             if(manager != null){
                 manager.createNotificationChannel(channel);
             }
+        }
+    }
+
+    private void initConfig() {
+        try {
+            Map config = new HashMap();
+            config.put("cloud_name", getString(R.string.cloudinary_cloud_name));
+            config.put("api_key", getString(R.string.cloudinary_api_key));
+            config.put("api_secret", getString(R.string.cloudinary_api_secret));
+            MediaManager.init(this, config);
+        } catch (IllegalStateException e) {
+            Log.d("cloudinary", "MediaManager already initialized");
+
         }
     }
 }

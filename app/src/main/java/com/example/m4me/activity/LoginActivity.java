@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -27,6 +28,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     EditText edt_email, edt_password;
     Button btn_login;
+    TextView tv_register;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,11 +70,20 @@ public class LoginActivity extends AppCompatActivity {
                 });
             }
         });
+
+        tv_register.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     private void initViews(){
         edt_email = findViewById(R.id.edt_email);
         edt_password = findViewById(R.id.edt_password);
         btn_login = findViewById(R.id.btn_login);
+        tv_register = findViewById(R.id.tv_register);
     }
 }

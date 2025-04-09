@@ -14,7 +14,6 @@ public class MyReceiver extends BroadcastReceiver {
 
         Intent intentService = new Intent(context, MusicService.class);
         intentService.putExtra("action_music_service", actionMusic);
-
         context.startService(intentService);
     }
 }

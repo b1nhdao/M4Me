@@ -5,13 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -29,7 +34,12 @@ import com.example.m4me.fragment.LibraryFragment;
 import com.example.m4me.fragment.SearchFragment;
 import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
@@ -40,6 +50,10 @@ public class MainActivity extends AppCompatActivity {
     private RelativeLayout layout_bottom;
     private ImageView img_song, img_play_or_pause, img_clear;
     private TextView tv_songTitle, tv_songArtist;
+
+    private SeekBar seekBar;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable runnable;
 
     private Song mSong;
     private boolean isPlaying;
@@ -52,10 +66,21 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             mSong = (Song) bundle.get("object_song");
-            isPlaying = (boolean) bundle.getBoolean("status_player");
+            isPlaying = bundle.getBoolean("status_player");
             int actionMusic = bundle.getInt("action_music");
 
             handleLayoutMusic(actionMusic);
+        }
+    };
+
+    private BroadcastReceiver seekbarReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            long currentPosition = intent.getLongExtra("current_position", 0);
+            long duration = intent.getLongExtra("duration", 0);
+
+            seekBar.setMax((int) duration);
+            seekBar.setProgress((int) currentPosition);
         }
     };
 
@@ -75,6 +100,18 @@ public class MainActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
+
+        layout_bottom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, SongPlayingActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("object_song", mSong);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
 
         loadFragment(new HomeFragment());
 
@@ -89,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
         img_clear = findViewById(R.id.img_clear);
         tv_songArtist = findViewById(R.id.tv_songArtist);
         tv_songTitle = findViewById(R.id.tv_songTitle);
+        seekBar = findViewById(R.id.seekBar);
     }
 
     private void handleBottomNavigationBarClick(){
@@ -120,6 +158,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(seekbarReceiver);
+        handler.removeCallbacks(runnable);
     }
 
     private void handleLayoutMusic(int action){
@@ -128,17 +168,23 @@ public class MainActivity extends AppCompatActivity {
                 layout_bottom.setVisibility(View.VISIBLE);
                 showInfoSong();
                 setStatusButtonPlayOrPause();
+                startSeekBarUpdater();
                 break;
             case MusicService.ACTION_PAUSE:
+                isPlaying = false;
                 setStatusButtonPlayOrPause();
                 break;
             case MusicService.ACTION_RESUME:
+                isPlaying = true;
                 setStatusButtonPlayOrPause();
                 break;
             case MusicService.ACTION_CLEAR:
                 layout_bottom.setVisibility(View.INVISIBLE);
+                stopSeekBarUpdater();
+                break;
         }
     }
+
 
     private void showInfoSong(){
         if(mSong == null){
@@ -166,7 +212,55 @@ public class MainActivity extends AppCompatActivity {
                 sendActionToService(MusicService.ACTION_CLEAR);
             }
         });
+
+        startSeekBarUpdater();
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser){
+                    sendActionToService(MusicService.ACTION_SEEK, progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
+
+//    SeekBar things
+
+    private void startSeekBarUpdater() {
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                updateSeekBar();
+                handler.postDelayed(this, 1000); // cập nhật mỗi 1 giây
+            }
+        };
+        handler.post(runnable);
+    }
+
+    private void stopSeekBarUpdater() {
+        if (handler != null && runnable != null) {
+            handler.removeCallbacks(runnable);
+        }
+    }
+
+    private void updateSeekBar() {
+        Intent intent = new Intent(this, MusicService.class);
+        intent.setAction("get_current_position");
+        startService(intent);
+    }
+
+//    End Seekbar things
 
     private void setStatusButtonPlayOrPause(){
         if(isPlaying){
@@ -180,6 +274,13 @@ public class MainActivity extends AppCompatActivity {
     private void sendActionToService(int action){
         Intent intent = new Intent(this, MusicService.class);
         intent.putExtra("action_music_service", action);
+        startService(intent);
+    }
+
+    private void sendActionToService(int action, int duration){
+        Intent intent = new Intent(this, MusicService.class);
+        intent.putExtra("action_music_service", action);
+        intent.putExtra("seek_position", duration);
         startService(intent);
     }
 }

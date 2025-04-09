@@ -1,0 +1,4 @@
+- definitely not that music channel back in the 2010s (please dont sue me)
+- i know this project is a mess, please dont judge these lines of code, i have no idea what im doing atm
+- default account: a@a.com, A123456.
+- for song uploading fucntion, create a new Cloudinary account. get your own cloud_name, api_key and secret_key. then create a secret.xml in res/value directory. then put your 3 values in that file respectively.

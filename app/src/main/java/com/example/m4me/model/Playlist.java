@@ -9,17 +9,27 @@ public class Playlist implements Serializable {
     String ThumbnailURL;
     List<String> SongIDs;
     String TagName;
+    List<String> TagNames;
 
     public Playlist(){
 
     }
 
-    public Playlist(String ID, String title, String thumbnailURL, List<String> SongIDs, String tagTitle) {
+    public Playlist(String ID, String title, String thumbnailURL, List<String> songIDs, String tagName, List<String> tagNames) {
         this.ID = ID;
         Title = title;
         ThumbnailURL = thumbnailURL;
-        this.SongIDs = SongIDs;
-        TagName = tagTitle;
+        SongIDs = songIDs;
+        TagName = tagName;
+        TagNames = tagNames;
+    }
+
+    public List<String> getTagNames() {
+        return TagNames;
+    }
+
+    public void setTagNames(List<String> tagNames) {
+        TagNames = tagNames;
     }
 
     public String getID() {

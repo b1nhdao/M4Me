@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -44,7 +45,6 @@ public class PlaylistAdapter_Home_Horizontally extends RecyclerView.Adapter<Play
         Playlist playlist = playlistList.get(position);
         Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
         holder.tv_playlistTitle.setText(shortenString(playlist.getTitle()));
-        holder.tv_playlistTags.setText(playlist.getTagName());
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -55,7 +55,15 @@ public class PlaylistAdapter_Home_Horizontally extends RecyclerView.Adapter<Play
                 context.startActivity(intent);
             }
         });
-    }
+        List<String> tags = playlist.getTagNames();
+        if (tags != null && !tags.isEmpty()) {
+            TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, tags);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
+            holder.rv_tags.setLayoutManager(layoutManager);
+            holder.rv_tags.setAdapter(tagAdapter);
+        } else {
+            holder.rv_tags.setAdapter(null);
+        }    }
 
     private String shortenString(String s){
         if (s.length() >= 32){
@@ -72,14 +80,15 @@ public class PlaylistAdapter_Home_Horizontally extends RecyclerView.Adapter<Play
     class MyViewHolder extends RecyclerView.ViewHolder {
         private CardView cardView;
         private ImageView img_thumbnail;
-        private TextView tv_playlistTitle, tv_playlistTags;
+        private TextView tv_playlistTitle;
+        RecyclerView rv_tags;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.cardView);
             img_thumbnail = itemView.findViewById(R.id.img_thumbnail);
             tv_playlistTitle = itemView.findViewById(R.id.tv_playlistTitle);
-            tv_playlistTags = itemView.findViewById(R.id.tv_playlistTags);
+            rv_tags = itemView.findViewById(R.id.rv_tags);
         }
     }
 }
