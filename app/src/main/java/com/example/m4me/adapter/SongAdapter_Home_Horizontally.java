@@ -46,6 +46,7 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
         Glide.with(context)
                 .load(song.getThumbnailUrl())
                 .into(holder.img_thumbnail);
+
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

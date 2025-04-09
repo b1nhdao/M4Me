@@ -58,4 +58,7 @@ dependencies {
     implementation "androidx.media3:media3-ui:1.6.0"
 
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+
+    //cloudinary
+    implementation 'com.cloudinary:cloudinary-android:3.0.2'
 }
