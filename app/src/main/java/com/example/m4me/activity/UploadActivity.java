@@ -1,7 +1,9 @@
 package com.example.m4me.activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -29,6 +31,7 @@ import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.m4me.R;
 import com.example.m4me.model.Song;
+import com.example.m4me.model.Tag;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -36,9 +39,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -53,12 +59,15 @@ public class UploadActivity extends AppCompatActivity {
     private Uri audioUri = null;
     private Uri imageUri = null;
 
-    String thumbnailURL = "";
-    String songURL = "";
+    private List<Tag> tagList = new ArrayList<>();
+    private List<Tag> selectedTags = new ArrayList<>();
 
-    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    private String thumbnailURL = "";
+    private String songURL = "";
 
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private static final String TAG = "cloudinary";
 
@@ -92,6 +101,13 @@ public class UploadActivity extends AppCompatActivity {
             }
         });
 
+        btn_pickTag.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showTagSelectionDialog();
+            }
+        });
+
         btn_uploadSong.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,7 +115,7 @@ public class UploadActivity extends AppCompatActivity {
                     uploadCloudinarySong();
                 }
                 else {
-//                    Toast.makeText(UploadActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UploadActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -118,23 +134,113 @@ public class UploadActivity extends AppCompatActivity {
         img_thumbnail = findViewById(R.id.img_thumbnail);
     }
 
+    private void showTagSelectionDialog() {
+        // Get all tags if not already loaded
+        if (tagList.isEmpty()) {
+            getAllTagsFromDatabase();
+            // Show loading while fetching tags
+            Toast.makeText(UploadActivity.this, "Loading tags...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create list of tag names and tracking for selected state
+        final String[] tagNames = new String[tagList.size()];
+        final boolean[] checkedTags = new boolean[tagList.size()];
+
+        // Prepare data for dialog
+        for (int i = 0; i < tagList.size(); i++) {
+            tagNames[i] = tagList.get(i).getName(); // Assuming Tag class has getName() method
+
+            // Pre-check tags that are already selected
+            checkedTags[i] = false;
+            for (Tag selectedTag : selectedTags) {
+                if (selectedTag.getID().equals(tagList.get(i).getID())) { // Assuming Tag class has getID() method
+                    checkedTags[i] = true;
+                    break;
+                }
+            }
+        }
+
+        // Create dialog builder
+        AlertDialog.Builder builder = new AlertDialog.Builder(UploadActivity.this);
+        builder.setTitle("Select Tags");
+
+        // Set multiple choice items
+        builder.setMultiChoiceItems(tagNames, checkedTags, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                // Update checked state
+                checkedTags[which] = isChecked;
+            }
+        });
+
+        // ok button
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Clear previously selected tags
+                selectedTags.clear();
+
+                // Add newly selected tags
+                StringBuilder selectedTagsText = new StringBuilder();
+
+                for (int i = 0; i < checkedTags.length; i++) {
+                    if (checkedTags[i]) {
+                        selectedTags.add(tagList.get(i));
+
+                        // Append tag name to display text
+                        if (selectedTagsText.length() > 0) {
+                            selectedTagsText.append(", ");
+                        }
+                        selectedTagsText.append(tagNames[i]);
+                    }
+                }
+
+                // Update the TextView
+                if (selectedTagsText.length() > 0) {
+                    tv_tag.setText(selectedTagsText.toString());
+                } else {
+                    tv_tag.setText("No tags selected");
+                }
+            }
+        });
+
+        // cancel button
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        // Show the dialog
+        builder.create().show();
+    }
+
     private void uploadDataToFirebase(String sourceURL, String thumbnailURL, String title){
         DocumentReference artistRef = db.collection("users").document(user.getUid());
 
         ArrayList<DocumentReference> tagRefs = new ArrayList<>();
 
-//        creating song document with all fields;
+        for (Tag tag : selectedTags) {
+            DocumentReference tagRef = db.collection("tags").document(tag.getID());
+            tagRefs.add(tagRef);
+        }
+
+//        creating song document with all fields
+        String randomCollectionString = generateRandomString(12);
+
         Map<String, Object> song = new HashMap<>();
         song.put("Artist", artistRef);
         song.put("ArtistName", user.getDisplayName());
-        song.put("ID", generateRandomString(12));
+        song.put("ID", randomCollectionString);
         song.put("PlayedCounter", 0);
         song.put("SourceURL", sourceURL);
         song.put("Tags", tagRefs);
         song.put("ThumbnailUrl", thumbnailURL);
         song.put("Title", title);
 
-        db.collection("songs").document(generateRandomString(12)).set(song).addOnCompleteListener(new OnCompleteListener<Void>() {
+        db.collection("songs").document(randomCollectionString).set(song).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d("Upload firebase", "DocumentSnapshot successfully written!");
@@ -227,6 +333,31 @@ public class UploadActivity extends AppCompatActivity {
                 Log.d(TAG, "onReschedule: ");
             }
         }).dispatch();
+    }
+
+    private void getAllTagsFromDatabase(){
+        db.collection("tags").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+                    tagList.clear();
+                    for (QueryDocumentSnapshot document : task.getResult()){
+                        Tag tag = document.toObject(Tag.class);
+                        tagList.add(tag);
+                    }
+                    if (!tagList.isEmpty()) {
+                        showTagSelectionDialog();
+                    } else {
+                        Toast.makeText(UploadActivity.this, "khong to tags ?", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("get tags", "failed ");
+            }
+        });
     }
 
     private void pickAudioFile() {

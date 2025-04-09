@@ -34,6 +34,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlaylistActivity extends AppCompatActivity {
 
@@ -160,6 +161,38 @@ public class PlaylistActivity extends AppCompatActivity {
                             });
                         } else {
                             adapter.notifyDataSetChanged(); // update adapter
+                        }
+
+                        List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
+                        if (tagRefs != null && !tagRefs.isEmpty()) {
+                            List<String> tagNames = new ArrayList<>();
+                            AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
+
+                            for (DocumentReference tagReference : tagRefs) {
+                                tagReference.get().addOnSuccessListener(tagSnapshot -> {
+                                    if (tagSnapshot.exists()) {
+                                        String tagName = tagSnapshot.getString("Name");
+                                        if (tagName != null) {
+                                            tagNames.add(tagName);
+                                        }
+                                    }
+
+                                    // Check if all tag requests are completed
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        song.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    Log.e("GetTags", "Error getting tag: ", e);
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        song.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
+                        }
+                        else {
+                            song.setTagNames(new ArrayList<>());
                         }
 
                         songList.add(song);

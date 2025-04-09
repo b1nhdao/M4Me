@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -60,6 +61,16 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                 clickChangeActivity(song);
             }
         });
+
+        List<String> tags = song.getTagNames();
+        if (tags != null && !tags.isEmpty()) {
+            TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, tags);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
+            holder.rv_tags.setLayoutManager(layoutManager);
+            holder.rv_tags.setAdapter(tagAdapter);
+        } else {
+            holder.rv_tags.setAdapter(null);
+        }
     }
 
     private void startMusicService(int currentSongIndex){
@@ -96,6 +107,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         private CardView cardView;
         private ImageView img_thumbnail, img_options;
         private TextView tv_songTitle, tv_songArtist, tv_playCounter, tv_duration;
+        private RecyclerView rv_tags;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.cardView);
@@ -104,6 +116,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             tv_songArtist = itemView.findViewById(R.id.tv_songArtist);
             tv_playCounter = itemView.findViewById(R.id.tv_playCounter);
             tv_duration = itemView.findViewById(R.id.tv_duration);
+            rv_tags = itemView.findViewById(R.id.rv_tags);
         }
     }
 }
