@@ -23,14 +23,20 @@ import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.Serializable;
 import java.util.List;
 
 public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAdapter_Playlist_Vertically.MyViewHolder> {
 
-    Context context;
-    List<Song> songList;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+    private Context context;
+    private List<Song> songList;
 
     public SongAdapter_Playlist_Vertically(Context context, List<Song> songList) {
         this.context = context;
@@ -71,6 +77,66 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         } else {
             holder.rv_tags.setAdapter(null);
         }
+
+        if (song.isFavourite()){
+            holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_24);
+        }
+        else {
+            holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_border_24);
+        }
+
+        holder.img_isFavourite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateFavourite(song);
+            }
+        });
+    }
+
+    private void updateFavourite(Song song) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(context, "Please login to add favorites", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String userEmail = currentUser.getEmail();
+        if (userEmail == null) {
+            return;
+        }
+
+        db.collection("users").whereEqualTo("email", userEmail)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+
+                        String userId = queryDocumentSnapshots.getDocuments().get(0).getId();
+                        String songId = song.getID();
+
+                        List<String> currentFavorites = (List<String>) queryDocumentSnapshots.getDocuments().get(0).get("favouriteSongIDs");
+
+                        if (currentFavorites != null) {
+                            if (currentFavorites.contains(songId)) {
+                                // remove fav
+                                currentFavorites.remove(songId);
+                                song.setFavourite(false);
+                                Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show();
+                            } else {
+                                // fav
+                                currentFavorites.add(songId);
+                                song.setFavourite(true);
+                                Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show();
+                            }
+
+                            db.collection("users").document(userId)
+                                    .update("favouriteSongIDs", currentFavorites)
+                                    .addOnSuccessListener(aVoid -> notifyDataSetChanged())
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(context, "Failed to update favorites", Toast.LENGTH_SHORT).show());
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Toast.makeText(context, "Error retrieving user data", Toast.LENGTH_SHORT).show());
     }
 
     private void startMusicService(int currentSongIndex){
@@ -108,6 +174,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         private ImageView img_thumbnail, img_options;
         private TextView tv_songTitle, tv_songArtist, tv_playCounter, tv_duration;
         private RecyclerView rv_tags;
+        private ImageView img_isFavourite;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.cardView);
@@ -117,6 +184,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             tv_playCounter = itemView.findViewById(R.id.tv_playCounter);
             tv_duration = itemView.findViewById(R.id.tv_duration);
             rv_tags = itemView.findViewById(R.id.rv_tags);
+            img_isFavourite = itemView.findViewById(R.id.img_isFavourite);
         }
     }
 }

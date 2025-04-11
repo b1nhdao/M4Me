@@ -23,7 +23,10 @@ import com.example.m4me.R;
 import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
+import com.example.m4me.model.User;
 import com.example.m4me.service.MusicService;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -33,7 +36,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlaylistActivity extends AppCompatActivity {
@@ -42,11 +47,17 @@ public class PlaylistActivity extends AppCompatActivity {
     private List<Song> songList = new ArrayList<>();
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseUser user;
 
     private RecyclerView rv_song;
     private TextView tv_playlistTitle;
     private ImageView img_playlistThumbnail, img_playlistFavourite;
     private Button btn_playNow;
+
+    private Set<String> userFavoriteSongIDs = new HashSet<>();
+
+    User mUser = new User();
 
     SongAdapter_Playlist_Vertically adapter;
 
@@ -75,6 +86,10 @@ public class PlaylistActivity extends AppCompatActivity {
             rv_song.setAdapter(adapter);
 
             getPlaylistFromDatabaseByPlaylistID(playlist.getID());
+
+            user = mAuth.getCurrentUser();
+
+            getUserFavoriteSongIDs();
 //            getSongsFromDatabaseByListSongIDs(playlist.getSongIDs());
         } else {
             Log.e("PlaylistActivity", "Playlist is null");
@@ -150,6 +165,8 @@ public class PlaylistActivity extends AppCompatActivity {
                     for (QueryDocumentSnapshot document : value) {
                         Song song = document.toObject(Song.class);
 
+                        song.setFavourite(userFavoriteSongIDs.contains(song.getID()));
+
                         DocumentReference artistRef = document.getDocumentReference("Artist");
                         if (artistRef != null) {
                             artistRef.get().addOnSuccessListener(snapshot -> {
@@ -194,7 +211,6 @@ public class PlaylistActivity extends AppCompatActivity {
                         else {
                             song.setTagNames(new ArrayList<>());
                         }
-
                         songList.add(song);
                     }
                 } else {
@@ -203,4 +219,41 @@ public class PlaylistActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void getUserFavoriteSongIDs() {
+        if (user == null || user.getEmail() == null) return;
+
+        db.collection("users").whereEqualTo("email", user.getEmail())
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.w("GetFavorites", "Listen failed.", error);
+                        return;
+                    }
+
+                    userFavoriteSongIDs.clear();
+
+                    if (value != null && !value.isEmpty()) {
+                        for (QueryDocumentSnapshot document : value) {
+                            mUser = document.toObject(User.class);
+                            List<String> favoriteIDs = mUser.getFavouriteSongIDs();
+                            if (favoriteIDs != null) {
+                                userFavoriteSongIDs.addAll(favoriteIDs);
+                            }
+                            break;
+                        }
+
+                        updateSongFavoriteStatus();
+                    }
+                });
+    }
+
+    private void updateSongFavoriteStatus() {
+        for (Song song : songList) {
+            song.setFavourite(userFavoriteSongIDs.contains(song.getID()));
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
 }

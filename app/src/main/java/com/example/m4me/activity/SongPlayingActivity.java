@@ -25,6 +25,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
 import com.example.m4me.model.Song;
+import com.example.m4me.sensor.ShakeSensor;
 import com.example.m4me.service.MusicService;
 
 import java.io.Serializable;
@@ -49,6 +50,21 @@ public class SongPlayingActivity extends AppCompatActivity {
     private boolean isPlaying;
     private boolean isLooping;
 
+    private ShakeSensor shakeManager;
+
+    private void setupShakeDetector() {
+        shakeManager = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
+            @Override
+            public void onShake() {
+                sendActionToService(MusicService.ACTION_NEXT);
+            }
+        });
+
+        if (!shakeManager.hasAccelerometer()) {
+            Toast.makeText(this, "get a new phone bruh !", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -70,9 +86,6 @@ public class SongPlayingActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             long currentPosition = intent.getLongExtra("current_position", 0);
             long duration = intent.getLongExtra("duration", 0);
-
-//            Log.d("duration", "onReceive: " + duration);
-
 
 //            update timer
             songDuration = (int) duration / 1000;
@@ -99,6 +112,13 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
+
+        setupShakeDetector();
+        shakeManager.start();
+
+        if (shakeManager != null) {
+            shakeManager.registerServiceClearListener();
+        }
 
         Bundle bundle = getIntent().getExtras();
         if(bundle != null){
@@ -310,6 +330,9 @@ public class SongPlayingActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (shakeManager != null) {
+            shakeManager.cleanup();
+        }
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(seekbarReceiver);
     }

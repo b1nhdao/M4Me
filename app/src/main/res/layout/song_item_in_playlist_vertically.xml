@@ -64,12 +64,13 @@
         android:text="0:00" />
 
     <ImageView
-        android:id="@+id/img_options"
-        android:layout_marginStart="370dp"
-        android:layout_marginTop="30dp"
+        android:id="@+id/img_isFavourite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/baseline_more_vert_24" />
+        android:layout_marginStart="370dp"
+        android:layout_marginTop="30dp"
+        app:srcCompat="@drawable/baseline_favorite_24"
+        app:tint="#ff6bc1" />
 
 
 </androidx.cardview.widget.CardView>

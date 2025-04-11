@@ -11,6 +11,7 @@ public class Song implements Serializable {
     String ThumbnailUrl;
     String SourceURL;
     List<String> TagNames;
+    boolean isFavourite = false;
 
     public Song(String ID, String title, String artistName, int playedCounter, String thumbnailUrl, String sourceURL, List<String> tagNames) {
         this.ID = ID;
@@ -23,6 +24,15 @@ public class Song implements Serializable {
     }
 
     public Song() {
+    }
+
+
+    public boolean isFavourite() {
+        return isFavourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        isFavourite = favourite;
     }
 
     public List<String> getTagNames() {

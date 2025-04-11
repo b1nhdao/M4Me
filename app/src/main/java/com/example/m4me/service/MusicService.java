@@ -175,6 +175,8 @@ public class MusicService extends Service {
                 break;
 
             case ACTION_CLEAR:
+                Intent clearIntent = new Intent("music_service_cleared");
+                LocalBroadcastManager.getInstance(this).sendBroadcast(clearIntent);
                 stopSelf();
                 sendActionToActivity(ACTION_CLEAR);
                 break;
@@ -357,6 +359,12 @@ public class MusicService extends Service {
             return 0;
         }
         return (int) exoPlayer.getDuration() / 1000;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
     }
 }
 
