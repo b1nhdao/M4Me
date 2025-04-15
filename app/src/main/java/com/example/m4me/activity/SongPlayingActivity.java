@@ -330,9 +330,6 @@ public class SongPlayingActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (shakeManager != null) {
-            shakeManager.cleanup();
-        }
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(seekbarReceiver);
     }

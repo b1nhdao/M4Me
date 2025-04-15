@@ -244,6 +244,7 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d("Upload firebase", "DocumentSnapshot successfully written!");
+                Toast.makeText(UploadActivity.this, "Upload thanh cong", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -269,7 +270,6 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onStart(String requestId) {
                 Log.d(TAG, "onStart: ");
-                Toast.makeText(UploadActivity.this, "Đang tải ...", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -280,9 +280,7 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String requestId, Map resultData) {
                 thumbnailURL = (String) resultData.get("secure_url");
-                Toast.makeText(UploadActivity.this, "Upload thành công", Toast.LENGTH_SHORT).show();
                 uploadDataToFirebase(songURL, thumbnailURL, edt_title.getText().toString());
-                Log.d(TAG, "onSuccess thumbnail:  " + thumbnailURL);
             }
 
             @Override
@@ -319,7 +317,6 @@ public class UploadActivity extends AppCompatActivity {
                 else {
                     uploadDataToFirebase(songURL, thumbnailURL, edt_title.getText().toString());
                 }
-                Toast.makeText(UploadActivity.this, "Upload thành công", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onSuccess song: " + songURL);
             }
 

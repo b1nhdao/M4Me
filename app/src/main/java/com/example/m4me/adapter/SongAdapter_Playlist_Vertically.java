@@ -113,7 +113,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                         String userId = queryDocumentSnapshots.getDocuments().get(0).getId();
                         String songId = song.getID();
 
-                        List<String> currentFavorites = (List<String>) queryDocumentSnapshots.getDocuments().get(0).get("favouriteSongIDs");
+                        List<String> currentFavorites = (List<String>) queryDocumentSnapshots.getDocuments().get(0).get("favouriteSongs");
 
                         if (currentFavorites != null) {
                             if (currentFavorites.contains(songId)) {
@@ -129,7 +129,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                             }
 
                             db.collection("users").document(userId)
-                                    .update("favouriteSongIDs", currentFavorites)
+                                    .update("favouriteSongs", currentFavorites)
                                     .addOnSuccessListener(aVoid -> notifyDataSetChanged())
                                     .addOnFailureListener(e ->
                                             Toast.makeText(context, "Failed to update favorites", Toast.LENGTH_SHORT).show());

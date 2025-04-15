@@ -11,7 +11,6 @@ import android.widget.TextView;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -235,7 +234,7 @@ public class PlaylistActivity extends AppCompatActivity {
                     if (value != null && !value.isEmpty()) {
                         for (QueryDocumentSnapshot document : value) {
                             mUser = document.toObject(User.class);
-                            List<String> favoriteIDs = mUser.getFavouriteSongIDs();
+                            List<String> favoriteIDs = mUser.getFavouriteSongs();
                             if (favoriteIDs != null) {
                                 userFavoriteSongIDs.addAll(favoriteIDs);
                             }

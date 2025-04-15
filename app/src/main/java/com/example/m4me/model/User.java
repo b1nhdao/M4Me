@@ -6,7 +6,7 @@ import java.util.List;
 public class User implements Serializable {
     String email;
     String displayName;
-    List<String> favouriteSongIDs;
+    List<String> favouriteSongs;
 
     public User (){
 
@@ -17,12 +17,12 @@ public class User implements Serializable {
         this.displayName = displayName;
     }
 
-    public List<String> getFavouriteSongIDs() {
-        return favouriteSongIDs;
+    public List<String> getFavouriteSongs() {
+        return favouriteSongs;
     }
 
-    public void setFavouriteSongIDs(List<String> favouriteSongIDs) {
-        this.favouriteSongIDs = favouriteSongIDs;
+    public void setFavouriteSongs(List<String> favouriteSongs) {
+        this.favouriteSongs = favouriteSongs;
     }
 
     public String getEmail() {
