@@ -1,5 +1,7 @@
 package com.example.m4me.model;
 
+import com.google.firebase.firestore.DocumentReference;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,7 +27,6 @@ public class Song implements Serializable {
 
     public Song() {
     }
-
 
     public boolean isFavourite() {
         return isFavourite;

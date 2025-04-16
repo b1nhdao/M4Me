@@ -24,12 +24,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.m4me.R;
+import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.Tag;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -38,7 +41,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -48,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UploadActivity extends AppCompatActivity {
 
@@ -69,6 +75,10 @@ public class UploadActivity extends AppCompatActivity {
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    private RecyclerView rv_song;
+    private SongAdapter_Playlist_Vertically adapter;
+    private List<Song> createdSongList = new ArrayList<>();
+
     private static final String TAG = "cloudinary";
 
     private static final int PICK_AUDIO_REQUEST = 1;
@@ -86,6 +96,11 @@ public class UploadActivity extends AppCompatActivity {
         });
 
         initViews();
+
+        getCreatedSongFromDatabase(user.getUid());
+        adapter = new SongAdapter_Playlist_Vertically(this, createdSongList, 2);
+        rv_song.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rv_song.setAdapter(adapter);
 
         btn_pickThumbnail.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,6 +147,7 @@ public class UploadActivity extends AppCompatActivity {
         btn_pickSong = findViewById(R.id.btn_pickSong);
         btn_uploadSong = findViewById(R.id.btn_uploadSong);
         img_thumbnail = findViewById(R.id.img_thumbnail);
+        rv_song = findViewById(R.id.rv_song);
     }
 
     private void showTagSelectionDialog() {
@@ -414,7 +430,62 @@ public class UploadActivity extends AppCompatActivity {
         if (result == null) {
             result = uri.getLastPathSegment();
         }
-
         return result;
+    }
+
+    private void getCreatedSongFromDatabase(String userID){
+        DocumentReference artistRef = db.document("users/" + userID);
+        db.collection("songs").whereEqualTo("Artist", artistRef).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                if (error != null){
+                    Log.d("getsong", "onEvent: error");
+                }
+                if (value != null){
+                    createdSongList.clear();
+                    for (QueryDocumentSnapshot document : value) {
+                        Song song = document.toObject(Song.class);
+                        createdSongList.add(song);
+                        List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
+                        if (tagRefs != null && !tagRefs.isEmpty()) {
+                            List<String> tagNames = new ArrayList<>();
+                            AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
+
+                            for (DocumentReference tagRef : tagRefs) {
+                                tagRef.get().addOnSuccessListener(tagSnapshot -> {
+                                    if (tagSnapshot.exists()) {
+                                        String tagName = tagSnapshot.getString("Name");
+                                        if (tagName != null) {
+                                            tagNames.add(tagName);
+                                        }
+//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
+                                    }
+
+                                    // Check if all tag requests are completed
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        song.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    Log.e("GetTags", "Error getting tag: ", e);
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        song.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                });
+                            }
+                        } else {
+                            song.setTagNames(new ArrayList<>());
+                        }
+                    }
+                    if(createdSongList.size() == value.size()){
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+                else {
+                    Log.d("getsong", "onEvent: failed");
+                }
+            }
+        });
     }
 }

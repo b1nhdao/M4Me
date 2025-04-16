@@ -3,10 +3,14 @@ package com.example.m4me.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,9 +24,12 @@ import com.bumptech.glide.Glide;
 import com.example.m4me.R;
 import com.example.m4me.activity.PlaylistActivity;
 import com.example.m4me.activity.SongPlayingActivity;
+import com.example.m4me.activity.UpdateUploadedSongActivity;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -37,10 +44,12 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
 
     private Context context;
     private List<Song> songList;
+    private int activityCode;
 
-    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList) {
+    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList, int activityCode) {
         this.context = context;
         this.songList = songList;
+        this.activityCode = activityCode;
     }
 
     @NonNull
@@ -78,19 +87,77 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             holder.rv_tags.setAdapter(null);
         }
 
-        if (song.isFavourite()){
-            holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_24);
-        }
-        else {
-            holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_border_24);
+        if(activityCode == 1){
+            if (song.isFavourite()){
+                holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_24);
+            }
+            else {
+                holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_border_24);
+            }
+
+            holder.img_isFavourite.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    updateFavourite(song);
+                }
+            });
         }
 
-        holder.img_isFavourite.setOnClickListener(new View.OnClickListener() {
+        if (activityCode == 2){
+            holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    PopupMenu popupMenu = new PopupMenu(context, holder.cardView);
+                    MenuInflater inflater = popupMenu.getMenuInflater();
+                    inflater.inflate(R.menu.options_menu, popupMenu.getMenu());
+                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            if(item.getItemId() == R.id.update){
+                                Log.d("menuclick", "onMenuItemClick: update");
+                                updateMenuOnClick(song);
+                                return true;
+                            }
+                            if(item.getItemId() == R.id.delete){
+                                Log.d("menuclick", "onMenuItemClick: delete");
+                                removeUploadedSongFromDatabase(position);
+                                return true;
+                            }
+                            return false;
+                        }
+                    });
+                    popupMenu.show();
+                    return false;
+                }
+            });
+        }
+    }
+
+    private void removeUploadedSongFromDatabase(int position){
+        Song song = songList.get(position);
+
+        db.collection("songs").document(song.getID()).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
-            public void onClick(View v) {
-                updateFavourite(song);
+            public void onSuccess(Void unused) {
+                songList.remove(position);
+                notifyItemRemoved(position);
+                notifyItemRangeChanged(position, songList.size());
+                Toast.makeText(context, "deleted", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, "delete failed", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateMenuOnClick(Song song){
+        Intent intent = new Intent(context, UpdateUploadedSongActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("object_song", song);
+        intent.putExtras(bundle);
+        context.startActivity(intent);
     }
 
     private void updateFavourite(Song song) {

@@ -80,7 +80,7 @@ public class PlaylistActivity extends AppCompatActivity {
             tv_playlistTitle.setText(playlist.getTitle());
             Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
 
-            adapter = new SongAdapter_Playlist_Vertically(this, songList);
+            adapter = new SongAdapter_Playlist_Vertically(this, songList, 1);
             rv_song.setLayoutManager(new LinearLayoutManager(this));
             rv_song.setAdapter(adapter);
 
@@ -147,24 +147,24 @@ public class PlaylistActivity extends AppCompatActivity {
                 }
                 getSongsFromDatabaseByListSongIDs(playlist.getSongIDs());
             }
-        });
-    }
-
-    private void getSongsFromDatabaseByListSongIDs(List<String> songIDs){
-        songList.clear();
-        db.collection("songs").whereIn("ID", songIDs).addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (error != null) {
-                    Log.w("GetSongs", "Listen failed.", error);
-                    return;
+                    });
                 }
 
-                if (value != null && !value.isEmpty()) {
-                    for (QueryDocumentSnapshot document : value) {
-                        Song song = document.toObject(Song.class);
+                private void getSongsFromDatabaseByListSongIDs(List<String> songIDs){
+                    songList.clear();
+                    db.collection("songs").whereIn("ID", songIDs).addSnapshotListener(new EventListener<QuerySnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                            if (error != null) {
+                                Log.w("GetSongs", "Listen failed.", error);
+                                return;
+                            }
 
-                        song.setFavourite(userFavoriteSongIDs.contains(song.getID()));
+                            if (value != null && !value.isEmpty()) {
+                                for (QueryDocumentSnapshot document : value) {
+                                    Song song = document.toObject(Song.class);
+
+                                    song.setFavourite(userFavoriteSongIDs.contains(song.getID()));
 
                         DocumentReference artistRef = document.getDocumentReference("Artist");
                         if (artistRef != null) {
@@ -254,5 +254,4 @@ public class PlaylistActivity extends AppCompatActivity {
             adapter.notifyDataSetChanged();
         }
     }
-
 }
