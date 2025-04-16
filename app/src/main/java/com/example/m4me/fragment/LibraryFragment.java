@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.m4me.R;
+import com.example.m4me.activity.FavouriteSongsActivity;
 import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.activity.UploadActivity;
 
@@ -68,6 +69,14 @@ public class LibraryFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getContext(), UploadActivity.class);
+                getContext().startActivity(intent);
+            }
+        });
+
+        cardView_likedSongs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getContext(), FavouriteSongsActivity.class);
                 getContext().startActivity(intent);
             }
         });
