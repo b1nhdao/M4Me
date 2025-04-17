@@ -8,4 +8,27 @@
     android:layout_height="match_parent"
     tools:context=".activity.PlaylistManagerActivity">
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+  <ImageView
+      android:id="@+id/img_addPlaylist"
+      android:layout_width="36dp"
+      android:layout_height="36dp"
+      android:layout_marginStart="24dp"
+      android:layout_marginTop="24dp"
+      android:layout_marginEnd="24dp"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="1.0"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:srcCompat="@drawable/baseline_add_circle_outline_24" />
+
+  <androidx.recyclerview.widget.RecyclerView
+      android:id="@+id/rv_playlist"
+      android:layout_width="394dp"
+      android:layout_height="389dp"
+      android:layout_marginStart="16dp"
+      android:layout_marginTop="80dp"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.0"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

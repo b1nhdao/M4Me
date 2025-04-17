@@ -14,15 +14,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.example.m4me.R;
 import com.example.m4me.activity.MainActivity;
-import com.example.m4me.adapter.SearchItemAdapter_Search_Vertically;
+import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
-import com.example.m4me.model.Tag;
 import com.example.m4me.model.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -64,7 +62,7 @@ public class SearchFragment extends Fragment {
     private List<Playlist> playlistList = new ArrayList<>();
     private List<User> userList = new ArrayList<>();
 
-    SearchItemAdapter_Search_Vertically adapter;
+    ItemAdapter_Global_Vertically adapter;
 
     private ToggleButton[] toggleButtons;
 
@@ -151,23 +149,23 @@ public class SearchFragment extends Fragment {
         switch (action){
             case "Bài hát":
                 getSongsFromDatabaseByKeyword(keyword);
-                adapter = new SearchItemAdapter_Search_Vertically(getContext(), songList, SearchItemAdapter_Search_Vertically.Type.SONG);
+                adapter = new ItemAdapter_Global_Vertically(getContext(), songList, ItemAdapter_Global_Vertically.Type.SONG);
                 rv_result.setAdapter(adapter);
                 break;
             case "Playlist":
                 getPlaylistsFromDatabaseByKeyword(keyword);
-                adapter = new SearchItemAdapter_Search_Vertically(getContext(), playlistList, SearchItemAdapter_Search_Vertically.Type.PLAYLIST);
+                adapter = new ItemAdapter_Global_Vertically(getContext(), playlistList, ItemAdapter_Global_Vertically.Type.PLAYLIST);
                 rv_result.setAdapter(adapter);
                 break;
             case "Thể loại":
                 getSongsFromDatabaseByTagTitle(keyword);
-                adapter = new SearchItemAdapter_Search_Vertically(getContext(), songList, SearchItemAdapter_Search_Vertically.Type.SONG);
+                adapter = new ItemAdapter_Global_Vertically(getContext(), songList, ItemAdapter_Global_Vertically.Type.SONG);
                 rv_result.setAdapter(adapter);
 //                Toast.makeText(getContext(), "Tính năng này chưa (sẽ không) có", Toast.LENGTH_SHORT).show();
                 break;
             case "User":
                 getUsersFromDatabaseByKeyword(keyword);
-                adapter = new SearchItemAdapter_Search_Vertically(getContext(), userList, SearchItemAdapter_Search_Vertically.Type.USER);
+                adapter = new ItemAdapter_Global_Vertically(getContext(), userList, ItemAdapter_Global_Vertically.Type.USER);
                 rv_result.setAdapter(adapter);
                 break;
         }
@@ -196,6 +194,17 @@ public class SearchFragment extends Fragment {
                         String playlistTitleLower = playlist.getTitle().toLowerCase();
 
                         if (playlistTitleLower.contains(keywordLower)){
+                            DocumentReference artistRef = document.getDocumentReference("Creator");
+                            if (artistRef != null){
+                                artistRef.get().addOnSuccessListener(snapshot -> {
+                                    if(snapshot.exists()){
+                                        String creator = snapshot.getString("displayName");
+                                        playlist.setCreatorName(creator);
+                                    }
+                                    adapter.notifyDataSetChanged();
+                                });
+                            }
+
                             List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
                             if (tagRefs != null && !tagRefs.isEmpty()) {
                                 List<String> tagNames = new ArrayList<>();
@@ -252,6 +261,19 @@ public class SearchFragment extends Fragment {
                         String songTitleToLower = song.getTitle().toLowerCase();
 
                         if (songTitleToLower.contains(keywordLower)){
+                            DocumentReference artistRef = document.getDocumentReference("Artist");
+                            if (artistRef != null){
+                                //artist ref
+                                artistRef.get().addOnSuccessListener(snapshot -> {
+                                    if(snapshot.exists()){
+                                        String artistName = snapshot.getString("displayName");
+                                        song.setArtistName(artistName);
+                                    }
+                                    adapter.notifyDataSetChanged();
+                                });
+                            }
+
+                            //tag ref
                             List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
                             if (tagRefs != null && !tagRefs.isEmpty()) {
                                 List<String> tagNames = new ArrayList<>();

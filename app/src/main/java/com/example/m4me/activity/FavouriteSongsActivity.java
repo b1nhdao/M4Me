@@ -1,7 +1,10 @@
 package com.example.m4me.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -17,6 +20,7 @@ import com.example.m4me.R;
 import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
+import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -31,6 +35,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,13 +43,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FavouriteSongsActivity extends AppCompatActivity {
 
     private RecyclerView rv_song;
+    private Button btn_playNow;
     private SongAdapter_Playlist_Vertically adapter;
 
     private FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser user = auth.getCurrentUser();
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    private List<Song> favouriteSongList = new ArrayList<>();
     private User mUser;
     private List<Song> songList = new ArrayList<>();
 
@@ -59,16 +64,42 @@ public class FavouriteSongsActivity extends AppCompatActivity {
             return insets;
         });
         rv_song = findViewById(R.id.rv_song);
-        something(user.getUid());
+        btn_playNow = findViewById(R.id.btn_playNow);
+        btn_playNow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeActivity(songList.get(0));
+                startService();
+            }
+        });
+
+        getFavouriteSongs(user.getUid());
 
         adapter = new SongAdapter_Playlist_Vertically(this, songList, 1);
         rv_song.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rv_song.setAdapter(adapter);
     }
 
+    private void startService(){
+        Intent intent = new Intent(this, MusicService.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("list_object_song", (Serializable) songList);
+        intent.putExtras(bundle);
+        startService(intent);
+    }
+
+    private void changeActivity(Song song){
+        Intent intent = new Intent(this, SongPlayingActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("list_object_song", (Serializable) songList);
+        bundle.putSerializable("object_song", song);
+        intent.putExtras(bundle);
+        startActivity(intent);
+    }
+
 
     List<String> favouriteIDs = new ArrayList<>();
-    private void something(String userID){
+    private void getFavouriteSongs(String userID){
         db.collection("users").document(userID).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {

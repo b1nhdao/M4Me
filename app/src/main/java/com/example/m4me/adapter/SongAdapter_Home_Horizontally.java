@@ -43,9 +43,11 @@ public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdap
         Song song = songList.get(position);
         holder.tv_songTitle.setText(shortenString(song.getTitle(), 28));
         holder.tv_artistName.setText(song.getArtistName());
-        Glide.with(context)
-                .load(song.getThumbnailUrl())
-                .into(holder.img_thumbnail);
+        if (song.getThumbnailUrl() != null){
+            Glide.with(context)
+                    .load(song.getThumbnailUrl())
+                    .into(holder.img_thumbnail);
+        }
 
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override

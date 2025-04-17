@@ -56,9 +56,11 @@ public class PlaylistActivity extends AppCompatActivity {
 
     private Set<String> userFavoriteSongIDs = new HashSet<>();
 
-    User mUser = new User();
+    private User mUser = new User();
 
-    SongAdapter_Playlist_Vertically adapter;
+    private SongAdapter_Playlist_Vertically adapter;
+
+    private int specialCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +78,15 @@ public class PlaylistActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             playlist = (Playlist) bundle.get("object_playlist");
+            specialCode = bundle.getInt("manager_code", 0);
 
             tv_playlistTitle.setText(playlist.getTitle());
-            Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
 
-            adapter = new SongAdapter_Playlist_Vertically(this, songList, 1);
+            if(playlist.getThumbnailURL() != null){
+                Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
+            }
+
+            adapter = new SongAdapter_Playlist_Vertically(this, songList, 1, specialCode, playlist.getID());
             rv_song.setLayoutManager(new LinearLayoutManager(this));
             rv_song.setAdapter(adapter);
 
@@ -152,6 +158,13 @@ public class PlaylistActivity extends AppCompatActivity {
 
     private void getSongsFromDatabaseByListSongIDs(List<String> songIDs){
         songList.clear();
+
+        if (songIDs == null || songIDs.isEmpty()) {
+            adapter.notifyDataSetChanged();
+            Log.d("GetSongs", "Song ID list is empty. No query executed.");
+            return;
+        }
+
         db.collection("songs").whereIn("ID", songIDs).addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
