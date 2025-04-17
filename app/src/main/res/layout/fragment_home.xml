@@ -64,7 +64,9 @@
         android:layout_height="231dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="348dp" />
+        android:layout_marginTop="347dp"
+        android:layout_marginEnd="-2dp" />
 
 </RelativeLayout>

@@ -1,5 +1,6 @@
 package com.example.m4me.activity;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,29 +9,45 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
+import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
+import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.sensor.ShakeSensor;
 import com.example.m4me.service.MusicService;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SongPlayingActivity extends AppCompatActivity {
 
@@ -51,6 +68,17 @@ public class SongPlayingActivity extends AppCompatActivity {
     private boolean isLooping;
 
     private ShakeSensor shakeManager;
+
+    private FirebaseAuth auth = FirebaseAuth.getInstance();
+    private FirebaseUser user = auth.getCurrentUser();
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    // dialog related things
+    private Dialog dialog;
+    private RecyclerView rv_playlist;
+    private List<Playlist> playlistCreatedList = new ArrayList<>();
+
+    private ItemAdapter_Global_Vertically adapter;
 
     private void setupShakeDetector() {
         shakeManager = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
@@ -110,6 +138,26 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         initViews();
 
+        Bundle bundle = getIntent().getExtras();
+        if(bundle != null){
+            songList = (List<Song>) bundle.get("list_object_song");
+            currentSong = (Song) bundle.get("object_song");
+
+            updateUIInitiate(currentSong);
+        }
+        else{
+            Log.d("SongList", "no bundle found");
+        }
+
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.add_to_playlist_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.custom_dialog_background);
+        dialog.setCancelable(true);
+
+        rv_playlist = dialog.findViewById(R.id.rv_playlist);
+        rv_playlist.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
 
@@ -118,16 +166,6 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         if (shakeManager != null) {
             shakeManager.registerServiceClearListener();
-        }
-
-        Bundle bundle = getIntent().getExtras();
-        if(bundle != null){
-            songList = (List<Song>) bundle.get("list_object_song");
-            currentSong = (Song) bundle.get("object_song");
-            updateUIInitiate(currentSong);
-        }
-        else{
-            Log.d("SongList", "no bundle found");
         }
 
         startSeekBarUpdater();
@@ -193,6 +231,54 @@ public class SongPlayingActivity extends AppCompatActivity {
                 sendActionToService(MusicService.ACTION_LOOP);
             }
         });
+
+        img_options.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                optionsOnClick();
+            }
+        });
+    }
+
+    private void optionsOnClick(){
+        PopupMenu popupMenu = new PopupMenu(this, img_options);
+        MenuInflater inflater = popupMenu.getMenuInflater();
+        inflater.inflate(R.menu.song_options_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if(item.getItemId() == R.id.addToPlaylist){
+                    Log.d("menuclick", "onMenuItemClick: tralalero tralala");
+                    getAllPlaylistFromUser(user.getUid());
+                    adapter = new ItemAdapter_Global_Vertically(SongPlayingActivity.this, playlistCreatedList, ItemAdapter_Global_Vertically.Type.CREATEDLIST, currentSong.getID());
+                    rv_playlist.setAdapter(adapter);
+
+                    dialog.show();
+                    return true;
+                }
+                if(item.getItemId() == R.id.download){
+                    Log.d("menuclick", "onMenuItemClick: bombodino crocodino");
+                    return true;
+                }
+                return false;
+            }
+        });
+        popupMenu.show();
+    }
+    private void initViews(){
+        tv_songArtist = findViewById(R.id.tv_songArtist);
+        tv_songTitle = findViewById(R.id.tv_songTitle);
+        img_songThumbnail = findViewById(R.id.img_songThumbnail);
+        img_forward = findViewById(R.id.img_forward);
+        img_play_or_pause = findViewById(R.id.img_play_or_pause);
+        img_skip = findViewById(R.id.img_skip);
+        img_favourite = findViewById(R.id.img_favourite);
+        img_comment = findViewById(R.id.img_comment);
+        img_loop = findViewById(R.id.img_loop);
+        img_options = findViewById(R.id.img_options);
+        seekBar = findViewById(R.id.seekBar);
+        tv_currentTime = findViewById(R.id.tv_currentTime);
+        tv_endTime = findViewById(R.id.tv_endTime);
     }
 
     private void sendActionToService(int action){
@@ -207,7 +293,6 @@ public class SongPlayingActivity extends AppCompatActivity {
         intent.putExtra("seek_position", progress);
         startService(intent);
     }
-
 
     private void btnPlayOrPauseOnClick(boolean isPlaying){
         if (isPlaying){
@@ -248,6 +333,7 @@ public class SongPlayingActivity extends AppCompatActivity {
     private void handleLayoutMusic(int action){
         switch (action){
             case MusicService.ACTION_START:
+                isPlaying = true;
                 setStatusButtonPlayOrPause();
                 startSeekBarUpdater();
                 updateUI();
@@ -311,20 +397,51 @@ public class SongPlayingActivity extends AppCompatActivity {
         }
     }
 
-    private void initViews(){
-        tv_songArtist = findViewById(R.id.tv_songArtist);
-        tv_songTitle = findViewById(R.id.tv_songTitle);
-        img_songThumbnail = findViewById(R.id.img_songThumbnail);
-        img_forward = findViewById(R.id.img_forward);
-        img_play_or_pause = findViewById(R.id.img_play_or_pause);
-        img_skip = findViewById(R.id.img_skip);
-        img_favourite = findViewById(R.id.img_favourite);
-        img_comment = findViewById(R.id.img_comment);
-        img_loop = findViewById(R.id.img_loop);
-        img_options = findViewById(R.id.img_options);
-        seekBar = findViewById(R.id.seekBar);
-        tv_currentTime = findViewById(R.id.tv_currentTime);
-        tv_endTime = findViewById(R.id.tv_endTime);
+    private void getAllPlaylistFromUser(String userID){
+        DocumentReference creatorRef = db.document("users/" + userID);
+        db.collection("playlists").whereEqualTo("Creator", creatorRef).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                if (value != null){
+                    playlistCreatedList.clear();
+                    for (QueryDocumentSnapshot document : value){
+                        Playlist playlist = document.toObject(Playlist.class);
+                        List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
+                        if (tagRefs != null && !tagRefs.isEmpty()) {
+                            List<String> tagNames = new ArrayList<>();
+                            AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
+
+                            for (DocumentReference tagReference : tagRefs) {
+                                tagReference.get().addOnSuccessListener(tagSnapshot -> {
+                                    if (tagSnapshot.exists()) {
+                                        String tagName = tagSnapshot.getString("Name");
+                                        if (tagName != null) {
+                                            tagNames.add(tagName);
+                                        }
+                                    }
+
+                                    // check if all tag requests are completed
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        playlist.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    Log.e("GetTags", "Error getting tag: ", e);
+                                    if (pendingTags.decrementAndGet() == 0) {
+                                        playlist.setTagNames(tagNames);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                });
+                            } // loop getting tags
+                        } // check if tagRef null
+                        else {
+                            playlist.setTagNames(new ArrayList<>());
+                        }
+                        playlistCreatedList.add(playlist);
+                    }
+                }
+            }
+        });
     }
 
     @Override

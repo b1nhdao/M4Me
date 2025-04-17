@@ -8,10 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,33 +23,65 @@ import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
 import com.example.m4me.service.MusicService;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<SearchItemAdapter_Search_Vertically.MyViewHolder> {
+public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdapter_Global_Vertically.MyViewHolder> {
 
     public enum Type {
         SONG,
         PLAYLIST,
-        USER
+        USER,
+        CREATEDLIST
     }
+
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private Context context;
     private List<Song> songList;
     private List<Playlist> playlistList;
     private List<User> userList;
     private Type type;
+    private String songToAddID;
 
-    public SearchItemAdapter_Search_Vertically(Context context, Object dataList, Type type) {
+    // code 1 = from upload playlist manager activity
+    private int specialCode;
+
+    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type) {
         this.context = context;
         this.type = type;
 
         if (type == Type.SONG) {
             this.songList = (List<Song>) dataList;
-        } else if (type == Type.PLAYLIST) {
+        } else if (type == Type.PLAYLIST || type == Type.CREATEDLIST) {
             this.playlistList = (List<Playlist>) dataList;
         } else if (type == Type.USER) {
             this.userList = (List<User>) dataList;
+        }
+    }
+
+    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type, String songID){
+        this.context = context;
+        this.type = type;
+        if(type == Type.CREATEDLIST){
+            this.playlistList = (List<Playlist>) dataList;
+            this.songToAddID = songID;
+        }
+    }
+
+    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type, int specialCode){
+        this.context = context;
+        this.type = type;
+        if(type == Type.PLAYLIST){
+            this.playlistList = (List<Playlist>) dataList;
+            this.specialCode = specialCode;
         }
     }
 
@@ -67,7 +99,9 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
                 Song song = songList.get(position);
                 holder.tv_title.setText(shortenString(song.getTitle(), 32));
                 holder.tv_songArtist.setText(song.getArtistName());
-                Glide.with(context).load(song.getThumbnailUrl()).into(holder.img_thumbnail);
+                if (song.getThumbnailUrl() != ""){
+                    Glide.with(context).load(song.getThumbnailUrl()).into(holder.img_thumbnail);
+                }
 
                 List<String> songTags = song.getTagNames();
                 if (songTags != null && !songTags.isEmpty()) {
@@ -90,9 +124,13 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
                 break;
 
             case PLAYLIST:
+            case CREATEDLIST:
                 Playlist playlist = playlistList.get(position);
                 holder.tv_title.setText(shortenString(playlist.getTitle(), 32));
-                Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
+                holder.tv_songArtist.setText(playlist.getCreatorName());
+                if (playlist.getThumbnailURL() != null){
+                    Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
+                }
 
                 List<String> playlistTags = playlist.getTagNames();
                 if (playlistTags != null && !playlistTags.isEmpty()) {
@@ -104,14 +142,25 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
                     holder.rv_tags.setAdapter(null);
                 }
 
-                holder.cardView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        clickPlaylistChangeActivity(playlist);
-                    }
-                });
-
+                if (type == Type.PLAYLIST){
+                    holder.cardView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            clickPlaylistChangeActivity(playlist);
+                        }
+                    });
+                }
+                else {
+                    holder.cardView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            addSongIDToPlaylist(playlist.getID(), songToAddID);
+//                            Toast.makeText(context, "Clicked on created list", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
                 break;
+
 
             case USER:
                 User user = userList.get(position);
@@ -149,8 +198,51 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
         Intent intent = new Intent(context, PlaylistActivity.class);
         Bundle bundle = new Bundle();
         bundle.putSerializable("object_playlist", playlist);
+        if (specialCode == 1){
+            bundle.putInt("manager_code", 1);
+        }
         intent.putExtras(bundle);
         context.startActivity(intent);
+    }
+
+    private void addSongIDToPlaylist(String playlistID, String songID){
+        db.collection("playlists").document(playlistID).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.getResult() != null){
+                    // getting all songIDs in current working playlist
+                    List<String> currentSongIDs = (List<String>) task.getResult().get("SongIDs");
+                    if (currentSongIDs == null){
+                        currentSongIDs = new ArrayList<>();
+                    }
+
+                    if (!currentSongIDs.contains(songID)){
+                        currentSongIDs.add(songID);
+
+                        // update song list
+                        db.collection("playlists").document(playlistID).update("SongIDs", currentSongIDs).addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                Toast.makeText(context, "DONE", Toast.LENGTH_SHORT).show();
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(context, e + "", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } // if add to playlist
+                    else {
+                        Toast.makeText(context, "Bai hat da co trong playlist roi", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, e + "", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private String shortenString (String s, int maxLength){
@@ -166,6 +258,7 @@ public class SearchItemAdapter_Search_Vertically extends RecyclerView.Adapter<Se
             case SONG:
                 return songList.size();
             case PLAYLIST:
+            case CREATEDLIST:
                 return playlistList.size();
             case USER:
                 return userList.size();

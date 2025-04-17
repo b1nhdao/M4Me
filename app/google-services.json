@@ -7,7 +7,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:134049933768:android:3351c02ed4800481bbb8fd",
+        "mobilesdk_app_id": "1:134049933768:android:df783e799e385d12bbb8fd",
         "android_client_info": {
           "package_name": "com.example.m4me"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD8bCezbs_wap20P78c3m23BwrRk8V7VTc"
+          "current_key": "AIzaSyCpExvlmiUEiXpDUXhgrm2Uedbx0dNoXkQ"
         }
       ],
       "services": {

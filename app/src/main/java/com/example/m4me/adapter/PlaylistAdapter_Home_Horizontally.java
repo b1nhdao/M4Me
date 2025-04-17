@@ -43,7 +43,9 @@ public class PlaylistAdapter_Home_Horizontally extends RecyclerView.Adapter<Play
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Playlist playlist = playlistList.get(position);
-        Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
+        if (playlist.getThumbnailURL() != null){
+            Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
+        }
         holder.tv_playlistTitle.setText(shortenString(playlist.getTitle()));
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -10,6 +10,7 @@ public class Playlist implements Serializable {
     List<String> SongIDs;
     String TagName;
     List<String> TagNames;
+    String CreatorName;
 
     public Playlist(){
 
@@ -22,6 +23,14 @@ public class Playlist implements Serializable {
         SongIDs = songIDs;
         TagName = tagName;
         TagNames = tagNames;
+    }
+
+    public String getCreatorName() {
+        return CreatorName;
+    }
+
+    public void setCreatorName(String creatorName) {
+        CreatorName = creatorName;
     }
 
     public List<String> getTagNames() {

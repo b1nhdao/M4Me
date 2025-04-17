@@ -13,33 +13,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="24dp"
-        android:text="Tải nhạc"
-        android:textSize="18dp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_song"
-        android:layout_width="376dp"
-        android:layout_height="348dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="388dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="340dp"
-        android:layout_marginEnd="24dp"
-        android:text="Danh sách nhạc đã tải lên"
+        android:text="Cập nhật nhạc"
         android:textSize="18dp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -92,7 +66,7 @@
         android:layout_height="32dp"
         android:layout_marginTop="168dp"
         android:background="@drawable/custom_input_1"
-        android:text="Chọn thể loại"
+        android:text="Chọn ảnh"
         android:textAllCaps="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.948"
@@ -125,39 +99,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_fileNameSong"
-        android:layout_width="263dp"
-        android:layout_height="28dp"
-        android:layout_marginTop="220dp"
-        android:gravity="start|center"
-        android:text="Bạn chưa chọn file:"
-        android:textSize="18dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.101"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <Button
-        android:id="@+id/btn_pickSong"
-        android:layout_width="100dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="216dp"
-        android:background="@drawable/custom_input_1"
-        android:text="Chọn bài hát"
-        android:textAllCaps="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.948"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/btn_uploadSong"
+        android:id="@+id/btn_updateSong"
         android:layout_width="197dp"
         android:layout_height="46dp"
-        android:layout_marginTop="268dp"
-        android:text="Đăng tải nhạc"
+        android:layout_marginTop="248dp"
         android:background="@drawable/custom_button_1"
+        android:text="Cập nhật nhạc"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
