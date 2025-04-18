@@ -13,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
@@ -20,8 +21,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -31,22 +34,35 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
+import com.example.m4me.adapter.CommentAdapter_Comment_Vertically;
 import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
+import com.example.m4me.model.Comment;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.sensor.ShakeSensor;
 import com.example.m4me.service.MusicService;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SongPlayingActivity extends AppCompatActivity {
@@ -79,6 +95,17 @@ public class SongPlayingActivity extends AppCompatActivity {
     private List<Playlist> playlistCreatedList = new ArrayList<>();
 
     private ItemAdapter_Global_Vertically adapter;
+
+    // bottom sheet
+    private BottomSheetBehavior<ConstraintLayout> commentBottomSheetBehavior;
+    private ConstraintLayout commentBottomSheet;
+    private RecyclerView rv_comment;
+    private EditText edt_content;
+    private ImageView img_send;
+//    private ImageView btnCloseComments;
+    private List<Comment> commentList = new ArrayList<>();
+    private CommentAdapter_Comment_Vertically commentAdapter;
+
 
     private void setupShakeDetector() {
         shakeManager = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
@@ -149,6 +176,8 @@ public class SongPlayingActivity extends AppCompatActivity {
             Log.d("SongList", "no bundle found");
         }
 
+
+        //dialog
         dialog = new Dialog(this);
         dialog.setContentView(R.layout.add_to_playlist_dialog);
         dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -157,6 +186,13 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         rv_playlist = dialog.findViewById(R.id.rv_playlist);
         rv_playlist.setLayoutManager(new LinearLayoutManager(this, RecyclerView.VERTICAL, false));
+
+        //comment bottom sheet setup
+
+        commentBottomSheet = findViewById(R.id.comment_bottom_sheet);
+        commentBottomSheetBehavior = BottomSheetBehavior.from(commentBottomSheet);
+        commentBottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
 
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
@@ -221,7 +257,7 @@ public class SongPlayingActivity extends AppCompatActivity {
         img_comment.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                open comments widget
+                imgCommentOnClick();
             }
         });
 
@@ -238,6 +274,27 @@ public class SongPlayingActivity extends AppCompatActivity {
                 optionsOnClick();
             }
         });
+
+        img_send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String content = edt_content.getText().toString();
+                if (content.isEmpty()){
+                    Toast.makeText(SongPlayingActivity.this, "trong'", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    createComment(content);
+                }
+            }
+        });
+    }
+
+    private void imgCommentOnClick(){
+        commentAdapter = new CommentAdapter_Comment_Vertically(this, commentList);
+        rv_comment.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rv_comment.setAdapter(commentAdapter);
+        commentBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        getCommentsFromSongID();
     }
 
     private void optionsOnClick(){
@@ -265,6 +322,7 @@ public class SongPlayingActivity extends AppCompatActivity {
         });
         popupMenu.show();
     }
+
     private void initViews(){
         tv_songArtist = findViewById(R.id.tv_songArtist);
         tv_songTitle = findViewById(R.id.tv_songTitle);
@@ -279,6 +337,10 @@ public class SongPlayingActivity extends AppCompatActivity {
         seekBar = findViewById(R.id.seekBar);
         tv_currentTime = findViewById(R.id.tv_currentTime);
         tv_endTime = findViewById(R.id.tv_endTime);
+
+        rv_comment = findViewById(R.id.rv_comment);
+        edt_content = findViewById(R.id.edt_content);
+        img_send = findViewById(R.id.img_send);
     }
 
     private void sendActionToService(int action){
@@ -442,6 +504,72 @@ public class SongPlayingActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void getCommentsFromSongID(){
+        if (currentSong != null){
+            db.collection("songs").document(currentSong.getID()).collection("comments").orderBy("timestamp", Query.Direction.DESCENDING).addSnapshotListener(new EventListener<QuerySnapshot>() {
+                @Override
+                public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                    if (value != null){
+                        commentList.clear();
+                        for (QueryDocumentSnapshot document : value){
+                            Comment comment = document.toObject(Comment.class);
+                            if (comment != null){
+                                commentList.add(comment);
+                                Log.d("comment", "onEvent: " + comment.getContent());
+                            }
+                        }
+                        commentAdapter.notifyDataSetChanged();
+                    }
+                    else{
+                        Log.d("comment", "onEvent: kkk failed");
+                    }
+                }
+            });
+        }
+    }
+
+    private void createComment(String commentContent){
+        if(currentSong == null){
+            return;
+        }
+
+        DocumentReference userRef = db.collection("users").document(user.getUid());
+
+        String randomCollectionString = generateRandomString(12);
+
+        Map<String, Object> comment = new HashMap<>();
+        comment.put("User", userRef);
+        comment.put("UserName", user.getDisplayName());
+        comment.put("ID", randomCollectionString);
+        comment.put("Content", commentContent);
+        comment.put("timestamp", FieldValue.serverTimestamp());
+
+        db.collection("songs").document(currentSong.getID()).collection("comments").add(comment).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentReference> task) {
+                Log.d("addcomment", "onComplete: add comment done");
+                edt_content.setText("");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d("addcomment", "onFailure: failed");
+                Toast.makeText(SongPlayingActivity.this, "failed", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private String generateRandomString(int length){
+        String allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random rand=new Random();
+        StringBuilder res=new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int randIndex=rand.nextInt(allowedChars.length());
+            res.append(allowedChars.charAt(randIndex));
+        }
+        return res.toString();
     }
 
     @Override
