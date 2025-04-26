@@ -51,11 +51,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class UploadActivity extends AppCompatActivity {
+public class UploadSongActivity extends AppCompatActivity {
 
     private EditText edt_title;
     private TextView tv_tag, tv_fileNameThumbnail, tv_fileNameSong;
@@ -130,7 +129,7 @@ public class UploadActivity extends AppCompatActivity {
                     uploadCloudinarySong();
                 }
                 else {
-                    Toast.makeText(UploadActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UploadSongActivity.this, "Hãy chọn file nhạc bạn muốn", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -155,7 +154,7 @@ public class UploadActivity extends AppCompatActivity {
         if (tagList.isEmpty()) {
             getAllTagsFromDatabase();
             // Show loading while fetching tags
-            Toast.makeText(UploadActivity.this, "Loading tags...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(UploadSongActivity.this, "Loading tags...", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -178,7 +177,7 @@ public class UploadActivity extends AppCompatActivity {
         }
 
         // Create dialog builder
-        AlertDialog.Builder builder = new AlertDialog.Builder(UploadActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(UploadSongActivity.this);
         builder.setTitle("Select Tags");
 
         // Set multiple choice items
@@ -260,7 +259,7 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d("Upload firebase", "DocumentSnapshot successfully written!");
-                Toast.makeText(UploadActivity.this, "Upload thanh cong", Toast.LENGTH_SHORT).show();
+                Toast.makeText(UploadSongActivity.this, "Upload thanh cong", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -316,7 +315,7 @@ public class UploadActivity extends AppCompatActivity {
             @Override
             public void onStart(String requestId) {
                 Log.d(TAG, "onStart: ");
-                Toast.makeText(UploadActivity.this, "Đang tải ...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(UploadSongActivity.this, "Đang tải ...", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -361,7 +360,7 @@ public class UploadActivity extends AppCompatActivity {
                     if (!tagList.isEmpty()) {
                         showTagSelectionDialog();
                     } else {
-                        Toast.makeText(UploadActivity.this, "khong to tags ?", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(UploadSongActivity.this, "khong to tags ?", Toast.LENGTH_SHORT).show();
                     }
                 }
             }

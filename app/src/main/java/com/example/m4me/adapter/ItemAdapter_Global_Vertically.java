@@ -3,10 +3,14 @@ package com.example.m4me.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +23,7 @@ import com.bumptech.glide.Glide;
 import com.example.m4me.R;
 import com.example.m4me.activity.PlaylistActivity;
 import com.example.m4me.activity.SongPlayingActivity;
+import com.example.m4me.activity.UpdateActivity;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
@@ -142,6 +147,35 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
                     holder.rv_tags.setAdapter(null);
                 }
 
+                if (specialCode == 1){
+                    holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            PopupMenu popupMenu = new PopupMenu(context, holder.cardView);
+                            MenuInflater inflater = popupMenu.getMenuInflater();
+                            inflater.inflate(R.menu.library_options_menu, popupMenu.getMenu());
+                            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                                @Override
+                                public boolean onMenuItemClick(MenuItem item) {
+                                    if(item.getItemId() == R.id.update){
+                                        Log.d("menuclick", "onMenuItemClick: update");
+                                        updateMenuOnClick(playlist);
+                                        return true;
+                                    }
+                                    if(item.getItemId() == R.id.delete){
+                                        Log.d("menuclick", "onMenuItemClick: delete");
+                                        removeCreatedPlaylistFromDatabase(position);
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                            });
+                            popupMenu.show();
+                            return false;
+                        }
+                    });
+                }
+
                 if (type == Type.PLAYLIST){
                     holder.cardView.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -176,6 +210,38 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
 
                 break;
         }
+    }
+
+    private void updateMenuOnClick(Playlist playlist){
+        Intent intent = new Intent(context, UpdateActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("object_playlist", playlist);
+        intent.putExtras(bundle);
+        context.startActivity(intent);
+    }
+
+    private void removeCreatedPlaylistFromDatabase(int position){
+        Playlist playlist = playlistList.get(position);
+        String playlistID = playlist.getID();
+        db.collection("playlists").document(playlistID).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                if (position < playlistList.size()){
+                    playlistList.remove(position);
+                    notifyItemRemoved(position);
+
+                    if (position < playlistList.size()){
+                        notifyItemRangeChanged(position, playlistList.size() - position);
+                    }
+                    Toast.makeText(context, "deleted", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(context, "failed", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void clickSongChangeActivity(Song song){

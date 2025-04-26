@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
+import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.Tag;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -39,10 +40,9 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
-import java.util.DoubleSummaryStatistics;
 import java.util.List;
 
-public class UpdateUploadedSongActivity extends AppCompatActivity {
+public class UpdateActivity extends AppCompatActivity {
 
     private EditText edt_title;
     private TextView tv_tag, tv_fileNameThumbnail;
@@ -50,6 +50,7 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
     private ImageView img_thumbnail;
 
     private Song song;
+    private Playlist playlist;
 
     private List<Tag> tagList = new ArrayList<>();
     private List<Tag> selectedTags = new ArrayList<>();
@@ -57,6 +58,8 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
 
     private String thumbnailURL = "";
     private String songID;
+
+    private String playlistID;
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -78,15 +81,37 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null){
-            song = (Song) bundle.get("object_song");
-            songID = song.getID();
-            edt_title.setText(song.getTitle());
-            thumbnailURL = song.getThumbnailUrl();
-            tagNames = song.getTagNames();
-            if(tagNames != null){
-                tv_tag.setText(tagNames.toString());
+            if (bundle.containsKey("object_song")){
+                song = (Song) bundle.get("object_song");
+                songID = song.getID();
+                edt_title.setText(song.getTitle());
+                thumbnailURL = song.getThumbnailUrl();
+                if (thumbnailURL == null){
+                    thumbnailURL = "";
+                }
+                tagNames = song.getTagNames();
+                if(tagNames != null){
+                    tv_tag.setText(tagNames.toString());
+                }
+                Glide.with(this).load(thumbnailURL).into(img_thumbnail);
             }
-            Glide.with(this).load(song.getThumbnailUrl()).into(img_thumbnail);
+            else {
+                playlist = (Playlist) bundle.get("object_playlist");
+                playlistID = playlist.getID();
+                thumbnailURL = playlist.getThumbnailURL();
+                tagNames = playlist.getTagNames();
+
+                if (tagNames != null){
+                    tv_tag.setText(tagNames.toString());
+                }
+                edt_title.setText(playlist.getTitle());
+                if (thumbnailURL != null){
+                    Glide.with(this).load(thumbnailURL).into(img_thumbnail);
+                }
+                else{
+                    Glide.with(this).load(R.drawable.logo).into(img_thumbnail);
+                }
+            }
         }
 
         btn_pickTag.setOnClickListener(new View.OnClickListener() {
@@ -108,7 +133,12 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
         btn_updateSong.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updateSongFromFirebase(songID, edt_title.getText().toString(), thumbnailURL, selectedTags);
+                if (song != null){
+                    updateSongFromFirebase("songs", songID, edt_title.getText().toString(), thumbnailURL, selectedTags);
+                }
+                else {
+                    updateSongFromFirebase("playlists", playlistID, edt_title.getText().toString(), thumbnailURL, selectedTags);
+                }
             }
         });
     }
@@ -137,7 +167,6 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
                     });
         }
     }
-
 
     private void initViews(){
         edt_title = findViewById(R.id.edt_title);
@@ -198,7 +227,7 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
         if (tagList.isEmpty()) {
             getAllTagsFromDatabase();
             // Show loading while fetching tags
-            Toast.makeText(UpdateUploadedSongActivity.this, "Loading tags...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(UpdateActivity.this, "Loading tags...", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -221,7 +250,7 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
         }
 
         // Create dialog builder
-        AlertDialog.Builder builder = new AlertDialog.Builder(UpdateUploadedSongActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(UpdateActivity.this);
         builder.setTitle("Select Tags");
 
         // Set multiple choice items
@@ -289,7 +318,7 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
                     if (!tagList.isEmpty()) {
                         showTagSelectionDialog();
                     } else {
-                        Toast.makeText(UpdateUploadedSongActivity.this, "khong to tags ?", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(UpdateActivity.this, "khong to tags ?", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -301,7 +330,7 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
         });
     }
 
-    private void updateSongFromFirebase(String songID, String title, String thumbnailURL, List<Tag> tags){
+    private void updateSongFromFirebase(String collectionPath, String songID, String title, String thumbnailURL, List<Tag> tags){
 
         ArrayList<DocumentReference> tagRefs = new ArrayList<>();
 
@@ -310,18 +339,18 @@ public class UpdateUploadedSongActivity extends AppCompatActivity {
             tagRefs.add(tagRef);
         }
 
-        db.collection("songs").document(songID).update("Title", title, "ThumbnailUrl", thumbnailURL, "Tags", tagRefs).addOnCompleteListener(new OnCompleteListener<Void>() {
+        db.collection(collectionPath).document(songID).update("Title", title, "ThumbnailUrl", thumbnailURL, "Tags", tagRefs).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if(task.isSuccessful()){
-                    Toast.makeText(UpdateUploadedSongActivity.this, "DONE", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UpdateActivity.this, "DONE", Toast.LENGTH_SHORT).show();
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.d("updatesong", "onFailure: " + e.toString());
-                Toast.makeText(UpdateUploadedSongActivity.this, "Failed for some reason ?", Toast.LENGTH_SHORT).show();
+                Toast.makeText(UpdateActivity.this, "Failed for some reason ?", Toast.LENGTH_SHORT).show();
             }
         });
     }

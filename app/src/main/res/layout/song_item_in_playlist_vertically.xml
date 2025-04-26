@@ -7,76 +7,80 @@
     android:layout_marginBottom="10dp"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/img_thumbnail"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="0dp"
-        android:padding="4dp"
-        android:src="@drawable/logo" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/tv_songTitle"
-        android:layout_width="287dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="6dp"
-        android:text="TextView"
-        android:textSize="16dp"
-        android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/img_thumbnail"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:padding="4dp"
+            android:src="@drawable/logo"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_tags"
-        android:layout_width="259dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="55dp"
-        android:layout_marginEnd="283dp" />
+        <TextView
+            android:id="@+id/tv_songTitle"
+            android:layout_width="266dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="8dp"
+            android:text="TextView"
+            android:textSize="16dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/img_thumbnail"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_songArtist"
-        android:layout_width="259dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="33dp"
-        android:layout_marginEnd="283dp"
-        android:text="TextView" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_tags"
+            android:layout_width="244dp"
+            android:layout_height="19dp"
+            android:layout_marginTop="3dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/img_thumbnail"
+            app:layout_constraintTop_toBottomOf="@+id/tv_songArtist" />
 
-    <TextView
-        android:id="@+id/tv_playCounter"
-        android:layout_width="47dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="55dp"
-        android:layout_marginEnd="283dp"
-        android:visibility="gone"
-        android:text="54.9k" />
+        <TextView
+            android:id="@+id/tv_songArtist"
+            android:layout_width="244dp"
+            android:layout_height="17dp"
+            android:layout_marginTop="3dp"
+            android:text="TextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/img_thumbnail"
+            app:layout_constraintTop_toBottomOf="@+id/tv_songTitle" />
 
-    <TextView
-        android:id="@+id/tv_duration"
-        android:layout_width="46dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="130dp"
-        android:layout_marginTop="55dp"
-        android:layout_marginEnd="283dp"
-        android:visibility="gone"
-        android:text="0:00" />
+        <ImageView
+            android:id="@+id/img_isFavourite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.52"
+            app:layout_constraintStart_toEndOf="@+id/tv_songArtist"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="#ff6bc1" />
 
-    <ImageView
-        android:id="@+id/img_isFavourite"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="370dp"
-        android:layout_marginTop="30dp"
-        app:tint="#ff6bc1" />
-
-    <ImageView
-        android:id="@+id/img_remove"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="342dp"
-        android:layout_marginTop="30dp" />
+        <ImageView
+            android:id="@+id/img_remove"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="28dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tv_songArtist"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.cardview.widget.CardView>

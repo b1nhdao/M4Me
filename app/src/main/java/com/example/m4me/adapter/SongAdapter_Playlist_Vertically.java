@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
 import com.example.m4me.activity.SongPlayingActivity;
-import com.example.m4me.activity.UpdateUploadedSongActivity;
+import com.example.m4me.activity.UpdateActivity;
 import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -36,7 +36,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAdapter_Playlist_Vertically.MyViewHolder> {
@@ -79,8 +78,6 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         }
         holder.tv_songTitle.setText(shortenString(song.getTitle()));
         holder.tv_songArtist.setText(song.getArtistName());
-        holder.tv_playCounter.setText(song.getPlayedCounter() + "");
-
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,23 +98,23 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             holder.rv_tags.setAdapter(null);
         }
 
-        if (specialCode == 1){
-            holder.img_remove.setImageResource(R.drawable.baseline_delete_24);
-            holder.img_remove.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-//                    remove from playlist
-                    removeSongFromPlaylist(position, platlistID);
-                }
-            });
-        }
-
         if(activityCode == 1){
-            if (song.isFavourite()){
-                holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_24);
+            if (specialCode == 1){
+                holder.img_remove.setImageResource(R.drawable.baseline_delete_24);
+                holder.img_remove.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        removeSongFromPlaylist(position, platlistID);
+                    }
+                });
             }
             else {
-                holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_border_24);
+                if (song.isFavourite()){
+                    holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_24);
+                }
+                else {
+                    holder.img_isFavourite.setImageResource(R.drawable.baseline_favorite_border_24);
+                }
             }
 
             holder.img_isFavourite.setOnClickListener(new View.OnClickListener() {
@@ -186,14 +183,19 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
 
     private void removeUploadedSongFromDatabase(int position){
         Song song = songList.get(position);
+        String songID = song.getID();
 
-        db.collection("songs").document(song.getID()).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+        db.collection("songs").document(songID).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void unused) {
-                songList.remove(position);
-                notifyItemRemoved(position);
-                notifyItemRangeChanged(position, songList.size());
-                Toast.makeText(context, "deleted", Toast.LENGTH_SHORT).show();
+                if (position < songList.size()){
+                    songList.remove(position);
+                    notifyItemRemoved(position);
+                    if (position < songList.size()){
+                        notifyItemRangeChanged(position, songList.size() - position);
+                    }
+                    Toast.makeText(context, "deleted", Toast.LENGTH_SHORT).show();
+                }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -204,7 +206,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
     }
 
     private void updateMenuOnClick(Song song){
-        Intent intent = new Intent(context, UpdateUploadedSongActivity.class);
+        Intent intent = new Intent(context, UpdateActivity.class);
         Bundle bundle = new Bundle();
         bundle.putSerializable("object_song", song);
         intent.putExtras(bundle);
@@ -290,7 +292,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
     class MyViewHolder extends RecyclerView.ViewHolder {
         private CardView cardView;
         private ImageView img_thumbnail, img_options;
-        private TextView tv_songTitle, tv_songArtist, tv_playCounter, tv_duration;
+        private TextView tv_songTitle, tv_songArtist;
         private RecyclerView rv_tags;
         private ImageView img_isFavourite, img_remove;
         public MyViewHolder(@NonNull View itemView) {
@@ -299,8 +301,6 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
             img_thumbnail = itemView.findViewById(R.id.img_thumbnail);
             tv_songTitle = itemView.findViewById(R.id.tv_songTitle);
             tv_songArtist = itemView.findViewById(R.id.tv_songArtist);
-            tv_playCounter = itemView.findViewById(R.id.tv_playCounter);
-            tv_duration = itemView.findViewById(R.id.tv_duration);
             rv_tags = itemView.findViewById(R.id.rv_tags);
             img_isFavourite = itemView.findViewById(R.id.img_isFavourite);
             img_remove = itemView.findViewById(R.id.img_remove);

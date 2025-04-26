@@ -24,19 +24,16 @@
         android:theme="@style/Theme.M4Me"
         tools:targetApi="31">
         <activity
-            android:name=".activity.makeThisQuick"
-            android:exported="false" />
-        <activity
             android:name=".activity.PlaylistManagerActivity"
             android:exported="false" />
         <activity
             android:name=".activity.FavouriteSongsActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.UpdateUploadedSongActivity"
+            android:name=".activity.UpdateActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.UploadActivity"
+            android:name=".activity.UploadSongActivity"
             android:exported="false" />
         <activity
             android:name=".activity.SongPlayingActivity"
