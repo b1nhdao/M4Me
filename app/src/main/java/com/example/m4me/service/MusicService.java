@@ -36,9 +36,18 @@ import com.example.m4me.activity.MainActivity;
 import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.boardcastReceiver.MyReceiver;
 import com.example.m4me.model.Song;
+import com.example.m4me.sensor.LightSensor;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.PowerManager;
+import android.view.WindowManager;
+
 
 public class MusicService extends Service {
 
@@ -55,8 +64,6 @@ public class MusicService extends Service {
     public static final int ACTION_NO_LOOP = 9;
     public static final int ACTION_SHUFFLE = 10;
 
-
-
     private ExoPlayer exoPlayer;
 
     public static ExoPlayer exoPlayerInstance;
@@ -70,6 +77,8 @@ public class MusicService extends Service {
     private Song mSong;
     private List<Song> mSongList;
     public static final String Channel_ID = "music_channel";
+
+    private LightSensor lightSensor;
 
     public MusicService() {
     }
@@ -90,6 +99,12 @@ public class MusicService extends Service {
             public void onIsPlayingChanged(boolean isPlayingNow) {
                 isPlaying = isPlayingNow;
                 sendNotification(mSong);
+
+                if (isPlaying) {
+                    startLightSensorIfNeeded();
+                } else {
+                    stopLightSensorIfNeeded();
+                }
             }
 
             @Override
@@ -99,6 +114,42 @@ public class MusicService extends Service {
                 }
             }
         });
+        initLightSensorManager();
+    }
+
+    private void initLightSensorManager() {
+        lightSensor = new LightSensor(this);
+
+        // Set up callback for light changes
+        lightSensor.setOnLightChangeListener(new LightSensor.OnLightChangeListener() {
+            @Override
+            public void onDarkDetected() {
+                // You can handle dark detection here if needed
+                Log.d("MusicService", "Dark detected - screen turned off");
+            }
+
+            @Override
+            public void onLightDetected() {
+                // You can handle light detection here if needed
+                Log.d("MusicService", "Light detected - screen can turn on");
+            }
+        });
+
+        if (!lightSensor.hasLightSensor()) {
+            Log.w("MusicService", "Light sensor not available on this device");
+        }
+    }
+
+    private void startLightSensorIfNeeded() {
+        if (lightSensor != null && isPlaying) {
+            lightSensor.startMonitoring();
+        }
+    }
+
+    private void stopLightSensorIfNeeded() {
+        if (lightSensor != null) {
+            lightSensor.stopMonitoring();
+        }
     }
 
     @Override
@@ -159,6 +210,7 @@ public class MusicService extends Service {
         exoPlayer.prepare();
         exoPlayer.play();
         isPlaying = true;
+        startLightSensorIfNeeded();
         sendActionToActivity(ACTION_START);
     }
 
@@ -205,6 +257,7 @@ public class MusicService extends Service {
         if (exoPlayer != null && exoPlayer.isPlaying()){
             exoPlayer.pause();
             isPlaying = false;
+            stopLightSensorIfNeeded();
             sendNotification(mSong);
         }
     }
@@ -213,6 +266,7 @@ public class MusicService extends Service {
         if(exoPlayer != null && !exoPlayer.isPlaying()){
             exoPlayer.play();
             isPlaying = true;
+            startLightSensorIfNeeded();
             sendNotification(mSong);
         }
     }
@@ -326,6 +380,16 @@ public class MusicService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d("Service", "Service onDestroy");
+        if(exoPlayer != null){
+            exoPlayer.release();
+            exoPlayer = null;
+        }
+
+        if (lightSensor != null) {
+            lightSensor.release();
+            lightSensor = null;
+        }
+
         if(exoPlayer != null){
             exoPlayer.release();
             exoPlayer = null;
