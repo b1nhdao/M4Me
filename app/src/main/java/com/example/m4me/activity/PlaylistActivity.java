@@ -1,7 +1,10 @@
 package com.example.m4me.activity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -33,6 +36,14 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.datatype.Artwork;
+
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -88,22 +99,25 @@ public class PlaylistActivity extends AppCompatActivity {
                 }
 
                 adapter = new SongAdapter_Playlist_Vertically(this, songList, 1, specialCode, playlist.getID());
-                rv_song.setLayoutManager(new LinearLayoutManager(this));
-                rv_song.setAdapter(adapter);
+                user = mAuth.getCurrentUser();
 
-            } else if (bundle.containsKey("object_offline_playlist")) {
-                Log.d("meu meu", "onCreate: successed ");
+                getPlaylistFromDatabaseByPlaylistID(playlist.getID());
+                getUserFavoriteSongIDs();
+            }
+            else if (bundle.containsKey("object_offline_playlist"))
+            {
+                songList = (List<Song>) bundle.get("object_offline_playlist");
+                tv_playlistTitle.setText("cac bai hat da tai");
+
+                songList = getDownloadedSongs();
+                adapter = new SongAdapter_Playlist_Vertically(this, songList, 3);
             }
 
+            rv_song.setLayoutManager(new LinearLayoutManager(this));
+            rv_song.setAdapter(adapter);
 
 
 
-            getPlaylistFromDatabaseByPlaylistID(playlist.getID());
-
-            user = mAuth.getCurrentUser();
-
-            getUserFavoriteSongIDs();
-//            getSongsFromDatabaseByListSongIDs(playlist.getSongIDs());
         } else {
             Log.e("PlaylistActivity", "Playlist is null");
             finish();
@@ -273,5 +287,45 @@ public class PlaylistActivity extends AppCompatActivity {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
+    }
+
+    private List<Song> getDownloadedSongs(){
+        List<Song> downloadedSongList = new ArrayList<>();
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+        File[] files = downloadDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".mp3");
+            }
+        });
+
+        if (files != null) {
+            for (File file : files) {
+                try {
+                    //  jAudiotagger to read metadata
+                    AudioFile audioFile = AudioFileIO.read(file);
+                    Tag tag = audioFile.getTag();
+
+                    if (tag != null) {
+                        Song song = new Song();
+
+                        song.setTitle(tag.getFirst(FieldKey.TITLE));
+                        song.setArtistName(tag.getFirst(FieldKey.ARTIST));
+                        song.setFilePath(file.getAbsolutePath());
+
+                        downloadedSongList.add(song);
+                    }
+                } catch (Exception e) {
+                    Log.e("SongLoader", "Error reading audio file: " + file.getName(), e);
+
+                    Song song = new Song();
+                    song.setTitle(file.getName());
+                    song.setFilePath(file.getAbsolutePath());
+                    downloadedSongList.add(song);
+                }
+            }
+        }
+        return downloadedSongList;
     }
 }

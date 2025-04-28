@@ -104,7 +104,6 @@ public class LibraryFragment extends Fragment {
         cardView_playlist.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getDownloadedSongs();
                 Intent intent = new Intent(getContext(), PlaylistManagerActivity.class);
                 startActivity(intent);
             }
@@ -113,6 +112,8 @@ public class LibraryFragment extends Fragment {
         cardView_downloadedSong.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                downloadedSongList = getDownloadedSongs();
+
                 Intent intent = new Intent(getContext(), PlaylistActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("object_offline_playlist", (Serializable) downloadedSongList);
@@ -123,7 +124,9 @@ public class LibraryFragment extends Fragment {
         return view;
     }
 
-    private void getDownloadedSongs(){
+    private List<Song> getDownloadedSongs(){
+        List<Song> downloadedSongList  = new ArrayList<>();
+
         File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
         File[] files = downloadDir.listFiles(new FilenameFilter() {
@@ -134,36 +137,19 @@ public class LibraryFragment extends Fragment {
         });
 
         if (files != null) {
-            downloadedSongList.clear();
-
             for (File file : files) {
                 try {
-                    // Use JAudioTagger to read metadata
+                    //  jAudiotagger to read metadata
                     AudioFile audioFile = AudioFileIO.read(file);
                     Tag tag = audioFile.getTag();
 
-//                    Log.d("meu meu", "downloadSong dasdsa: " + Uri.fromFile(file));
-
                     if (tag != null) {
-                        // Create a Song object with metadata
                         Song song = new Song();
 
-                        // Set basic file info
                         song.setTitle(tag.getFirst(FieldKey.TITLE));
                         song.setArtistName(tag.getFirst(FieldKey.ARTIST));
                         song.setFilePath(file.getAbsolutePath());
 
-                        Log.d("idk", "getDownloadedSongs: " + file.getAbsolutePath());
-
-                        // Get album art if available
-                        Artwork artwork = tag.getFirstArtwork();
-                        if (artwork != null) {
-                            byte[] artworkData = artwork.getBinaryData();
-                            Bitmap thumbnail = BitmapFactory.decodeByteArray(artworkData, 0, artworkData.length);
-                            song.setThumbnailBitmap(thumbnail);
-                        }
-
-                        // Add to list
                         downloadedSongList.add(song);
                     }
                 } catch (Exception e) {
@@ -176,5 +162,6 @@ public class LibraryFragment extends Fragment {
                 }
             }
         }
+        return downloadedSongList;
     }
 }

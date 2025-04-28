@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -49,6 +50,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.PowerManager;
 import android.view.WindowManager;
+
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.datatype.Artwork;
 
 
 public class MusicService extends Service {
@@ -162,7 +168,7 @@ public class MusicService extends Service {
             if (song != null) {
                 mSongList = null;
                 mSong = song;
-                startMusic(mSong.getSourceURL());
+                startMusic(mSong);
                 sendNotification(mSong);
             }
             List<Song> songlist = (List<Song>) bundle.get("list_object_song");
@@ -170,7 +176,7 @@ public class MusicService extends Service {
                 mSongList = songlist;
                 currentSongIndex = bundle.getInt("current_song_index", 0);
                 mSong = mSongList.get(currentSongIndex);
-                startMusic(mSong.getSourceURL());
+                startMusic(mSong);
                 sendNotification(mSong);
             }
             String test = bundle.getString("key_test");
@@ -194,7 +200,7 @@ public class MusicService extends Service {
         return exoPlayerInstance;
     }
 
-    private void startMusic(String songUrl) {
+    private void startMusic(Song song) {
         if (exoPlayer != null) {
             exoPlayer.stop();
             exoPlayer.clearMediaItems();
@@ -205,8 +211,14 @@ public class MusicService extends Service {
                 exoPlayer.setRepeatMode(Player.REPEAT_MODE_OFF);
             }
         }
+        MediaItem mediaItem;
 
-        MediaItem mediaItem = MediaItem.fromUri(songUrl);
+        if (song.getSourceURL() != null){
+            mediaItem = MediaItem.fromUri(song.getSourceURL());
+        }
+        else{
+            mediaItem = MediaItem.fromUri(Uri.fromFile(new File(song.getFilePath())));
+        }
 
         exoPlayer.setMediaItem(mediaItem);
         exoPlayer.prepare();
@@ -282,11 +294,11 @@ public class MusicService extends Service {
                 currentSongIndex = 0;
             }
             mSong = mSongList.get(currentSongIndex);
-            startMusic(mSong.getSourceURL());
+            startMusic(mSong);
             sendNotification(mSong);
             sendActionToActivity(ACTION_NEXT);
         }
-        startMusic(mSong.getSourceURL());
+        startMusic(mSong);
         sendNotification(mSong);
         sendActionToActivity(ACTION_NEXT);
     }
@@ -295,7 +307,7 @@ public class MusicService extends Service {
         if (mSongList != null && currentSongIndex > 0){
             currentSongIndex--;
             mSong = mSongList.get(currentSongIndex);
-            startMusic(mSong.getSourceURL());
+            startMusic(mSong);
             sendNotification(mSong);
             sendActionToActivity(ACTION_PREV);
         }

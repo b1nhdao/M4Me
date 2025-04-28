@@ -4,9 +4,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -32,6 +35,13 @@ import com.example.m4me.model.Song;
 import com.example.m4me.service.MusicService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.datatype.Artwork;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -184,7 +194,13 @@ public class MainActivity extends AppCompatActivity {
         }
         tv_songTitle.setText(mSong.getTitle());
         tv_songArtist.setText(mSong.getArtistName());
-        Glide.with(MainActivity.this).load(mSong.getThumbnailUrl()).into(img_song);
+
+        if (mSong.getSourceURL() != null){
+            Glide.with(MainActivity.this).load(mSong.getThumbnailUrl()).into(img_song);
+        }
+        else {
+            loadThumbnailFrom(mSong);
+        }
 
         img_play_or_pause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -276,4 +292,23 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
     }
 
+    private void loadThumbnailFrom(Song song){
+        try {
+            //  jAudiotagger to read metadata
+            AudioFile audioFile = AudioFileIO.read(new File(song.getFilePath()));
+            Tag tag = audioFile.getTag();
+
+            if (tag != null) {
+                // thumbnail
+                Artwork artwork = tag.getFirstArtwork();
+                if (artwork != null) {
+                    byte[] artworkData = artwork.getBinaryData();
+                    Bitmap thumbnail = BitmapFactory.decodeByteArray(artworkData, 0, artworkData.length);
+                    Glide.with(this).load(thumbnail).into(img_song);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("SongLoader", "Error reading audio file: " );
+        }
+    }
 }

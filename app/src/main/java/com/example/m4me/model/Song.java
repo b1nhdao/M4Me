@@ -117,4 +117,20 @@ public class Song implements Serializable {
     public Uri getUri() {
         return Uri.fromFile(new File(filePath));
     }
+
+    @Override
+    public String toString() {
+        return "Song{" +
+                "ID='" + ID + '\'' +
+                ", Title='" + Title + '\'' +
+                ", ArtistName='" + ArtistName + '\'' +
+                ", PlayedCounter=" + PlayedCounter +
+                ", ThumbnailUrl='" + ThumbnailUrl + '\'' +
+                ", SourceURL='" + SourceURL + '\'' +
+                ", TagNames=" + TagNames +
+                ", isFavourite=" + isFavourite +
+                ", filePath='" + filePath + '\'' +
+                ", thumbnailBitmap=" + thumbnailBitmap +
+                '}';
+    }
 }

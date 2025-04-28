@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
@@ -385,6 +386,9 @@ public class SongPlayingActivity extends AppCompatActivity {
             tv_songTitle.setText(currentSong.getTitle());
             tv_endTime.setText(formatTime(songDuration));
         }
+        if (currentSong.getFilePath() != null){
+            loadThumbnailFrom(currentSong);
+        }
     }
 
 //    idk why
@@ -392,6 +396,10 @@ public class SongPlayingActivity extends AppCompatActivity {
         Glide.with(this).load(song.getThumbnailUrl()).into(img_songThumbnail);
         tv_songArtist.setText(song.getArtistName());
         tv_songTitle.setText(song.getTitle());
+
+        if (song.getFilePath() != null){
+            loadThumbnailFrom(song);
+        }
     }
 
     private String formatTime(int duration) {
@@ -678,6 +686,26 @@ public class SongPlayingActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    private void loadThumbnailFrom(Song song){
+        try {
+            //  jAudiotagger to read metadata
+            AudioFile audioFile = AudioFileIO.read(new File(song.getFilePath()));
+            Tag tag = audioFile.getTag();
+
+            if (tag != null) {
+                // thumbnail
+                Artwork artwork = tag.getFirstArtwork();
+                if (artwork != null) {
+                    byte[] artworkData = artwork.getBinaryData();
+                    Bitmap thumbnail = BitmapFactory.decodeByteArray(artworkData, 0, artworkData.length);
+                    Glide.with(this).load(thumbnail).into(img_songThumbnail);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("SongLoader", "Error reading audio file: " );
         }
     }
 
