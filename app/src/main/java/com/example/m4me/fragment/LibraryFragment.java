@@ -1,19 +1,38 @@
 package com.example.m4me.fragment;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
+import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.m4me.R;
 import com.example.m4me.activity.FavouriteSongsActivity;
+import com.example.m4me.activity.PlaylistActivity;
 import com.example.m4me.activity.PlaylistManagerActivity;
 import com.example.m4me.activity.UploadSongActivity;
+import com.example.m4me.model.Song;
+
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.datatype.Artwork;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,7 +42,9 @@ import com.example.m4me.activity.UploadSongActivity;
 public class LibraryFragment extends Fragment {
 
 
-    private CardView cardView_likedSongs, cardView_playlist, cardView_following, cardView_upload;
+    private CardView cardView_likedSongs, cardView_playlist, cardView_following, cardView_upload, cardView_downloadedSong;
+
+    private List<Song> downloadedSongList = new ArrayList<>();
 
     public LibraryFragment() {
         // Required empty public constructor
@@ -61,12 +82,13 @@ public class LibraryFragment extends Fragment {
         cardView_playlist = view.findViewById(R.id.cardView_playlist);
         cardView_following = view.findViewById(R.id.cardView_following);
         cardView_upload = view.findViewById(R.id.cardView_upload);
+        cardView_downloadedSong = view.findViewById(R.id.cardView_downloadedSong);
 
         cardView_upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getContext(), UploadSongActivity.class);
-                getContext().startActivity(intent);
+                startActivity(intent);
             }
         });
 
@@ -74,18 +96,85 @@ public class LibraryFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getContext(), FavouriteSongsActivity.class);
-                getContext().startActivity(intent);
+                startActivity(intent);
             }
         });
+
 
         cardView_playlist.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                getDownloadedSongs();
                 Intent intent = new Intent(getContext(), PlaylistManagerActivity.class);
                 startActivity(intent);
             }
         });
 
+        cardView_downloadedSong.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getContext(), PlaylistActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("object_offline_playlist", (Serializable) downloadedSongList);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
         return view;
+    }
+
+    private void getDownloadedSongs(){
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+        File[] files = downloadDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".mp3");
+            }
+        });
+
+        if (files != null) {
+            downloadedSongList.clear();
+
+            for (File file : files) {
+                try {
+                    // Use JAudioTagger to read metadata
+                    AudioFile audioFile = AudioFileIO.read(file);
+                    Tag tag = audioFile.getTag();
+
+//                    Log.d("meu meu", "downloadSong dasdsa: " + Uri.fromFile(file));
+
+                    if (tag != null) {
+                        // Create a Song object with metadata
+                        Song song = new Song();
+
+                        // Set basic file info
+                        song.setTitle(tag.getFirst(FieldKey.TITLE));
+                        song.setArtistName(tag.getFirst(FieldKey.ARTIST));
+                        song.setFilePath(file.getAbsolutePath());
+
+                        Log.d("idk", "getDownloadedSongs: " + file.getAbsolutePath());
+
+                        // Get album art if available
+                        Artwork artwork = tag.getFirstArtwork();
+                        if (artwork != null) {
+                            byte[] artworkData = artwork.getBinaryData();
+                            Bitmap thumbnail = BitmapFactory.decodeByteArray(artworkData, 0, artworkData.length);
+                            song.setThumbnailBitmap(thumbnail);
+                        }
+
+                        // Add to list
+                        downloadedSongList.add(song);
+                    }
+                } catch (Exception e) {
+                    Log.e("SongLoader", "Error reading audio file: " + file.getName(), e);
+
+                    Song song = new Song();
+                    song.setTitle(file.getName());
+                    song.setFilePath(file.getAbsolutePath());
+                    downloadedSongList.add(song);
+                }
+            }
+        }
     }
 }

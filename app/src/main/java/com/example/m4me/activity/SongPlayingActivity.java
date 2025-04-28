@@ -1,11 +1,16 @@
 package com.example.m4me.activity;
 
 import android.app.Dialog;
+import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -58,6 +63,14 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.tag.FieldKey;
+import org.jaudiotagger.tag.Tag;
+import org.jaudiotagger.tag.datatype.Artwork;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,7 +118,6 @@ public class SongPlayingActivity extends AppCompatActivity {
 //    private ImageView btnCloseComments;
     private List<Comment> commentList = new ArrayList<>();
     private CommentAdapter_Comment_Vertically commentAdapter;
-
 
     private void setupShakeDetector() {
         shakeManager = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
@@ -315,6 +327,7 @@ public class SongPlayingActivity extends AppCompatActivity {
                 }
                 if(item.getItemId() == R.id.download){
                     Log.d("menuclick", "onMenuItemClick: bombodino crocodino");
+                    downloadSong();
                     return true;
                 }
                 return false;
@@ -570,6 +583,102 @@ public class SongPlayingActivity extends AppCompatActivity {
             res.append(allowedChars.charAt(randIndex));
         }
         return res.toString();
+    }
+
+    private void downloadSong() {
+        String urlSong = currentSong.getSourceURL();
+        String fileName = currentSong.getTitle() + ".mp3"; // Assuming MP3 format
+
+        // avoid conflicts
+        String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
+
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(urlSong));
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
+        request.setTitle(currentSong.getTitle());
+        request.setDescription("Downloading " + fileName);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File destinationFile = new File(downloadDir, uniqueFileName);
+        request.setDestinationUri(Uri.fromFile(destinationFile));
+
+
+        Log.d("meu meu", "downloadSong: " + Uri.fromFile(destinationFile));
+
+        DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+        if (downloadManager != null) {
+            final long downloadId = downloadManager.enqueue(request);
+
+            // broadcastReceiver to be notified when download complete
+            BroadcastReceiver onComplete = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                    if (id == downloadId) {
+                        // Download completed, now set metadata
+                        setAudioMetadata(destinationFile);
+                        context.unregisterReceiver(this);
+                    }
+                }
+            };
+            registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        }
+    }
+
+    private void setAudioMetadata(File audioFile) {
+        try {
+            // download thumbnail
+            Bitmap thumbnail = null;
+            if (currentSong.getThumbnailUrl() != null) {
+                thumbnail = downloadThumbnail(currentSong.getThumbnailUrl());
+            }
+
+            AudioFile f = AudioFileIO.read(audioFile);
+            Tag tag = f.getTag();
+            if (tag == null) {
+                tag = f.createDefaultTag();
+            }
+
+            // set basic metadata
+            ((org.jaudiotagger.tag.Tag) tag).setField(FieldKey.ARTIST, currentSong.getArtistName());
+            tag.setField(FieldKey.TITLE, currentSong.getTitle());
+
+            if (thumbnail != null) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                thumbnail.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+
+                // create artwork in jAudiotagger
+                Artwork artwork = new Artwork();
+                artwork.setBinaryData(baos.toByteArray());
+                artwork.setMimeType("image/jpeg");
+                artwork.setPictureType(3);
+
+                // add artwork
+                tag.addField(artwork);
+            }
+
+            f.setTag(tag);
+            f.commit();
+
+            // make the file visible
+            MediaScannerConnection.scanFile(this,
+                    new String[] { audioFile.getAbsolutePath() }, null, null);
+
+            Toast.makeText(this, "download complete", Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Bitmap downloadThumbnail(String url) {
+        try {
+            return Glide.with(this).asBitmap().load(url).submit().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override

@@ -77,18 +77,26 @@ public class PlaylistActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            playlist = (Playlist) bundle.get("object_playlist");
-            specialCode = bundle.getInt("manager_code", 0);
+            if (bundle.containsKey("object_playlist")){
+                playlist = (Playlist) bundle.get("object_playlist");
+                specialCode = bundle.getInt("manager_code", 0);
 
-            tv_playlistTitle.setText(playlist.getTitle());
+                tv_playlistTitle.setText(playlist.getTitle());
 
-            if(playlist.getThumbnailURL() != null){
-                Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
+                if(playlist.getThumbnailURL() != null){
+                    Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
+                }
+
+                adapter = new SongAdapter_Playlist_Vertically(this, songList, 1, specialCode, playlist.getID());
+                rv_song.setLayoutManager(new LinearLayoutManager(this));
+                rv_song.setAdapter(adapter);
+
+            } else if (bundle.containsKey("object_offline_playlist")) {
+                Log.d("meu meu", "onCreate: successed ");
             }
 
-            adapter = new SongAdapter_Playlist_Vertically(this, songList, 1, specialCode, playlist.getID());
-            rv_song.setLayoutManager(new LinearLayoutManager(this));
-            rv_song.setAdapter(adapter);
+
+
 
             getPlaylistFromDatabaseByPlaylistID(playlist.getID());
 

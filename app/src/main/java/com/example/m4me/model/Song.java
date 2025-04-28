@@ -1,7 +1,11 @@
 package com.example.m4me.model;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
+
 import com.google.firebase.firestore.DocumentReference;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -14,6 +18,8 @@ public class Song implements Serializable {
     String SourceURL;
     List<String> TagNames;
     boolean isFavourite = false;
+    String filePath;
+    Bitmap thumbnailBitmap;
 
     public Song(String ID, String title, String artistName, int playedCounter, String thumbnailUrl, String sourceURL, List<String> tagNames) {
         this.ID = ID;
@@ -26,6 +32,22 @@ public class Song implements Serializable {
     }
 
     public Song() {
+    }
+
+    public Bitmap getThumbnailBitmap() {
+        return thumbnailBitmap;
+    }
+
+    public void setThumbnailBitmap(Bitmap thumbnailBitmap) {
+        this.thumbnailBitmap = thumbnailBitmap;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public boolean isFavourite() {
@@ -90,5 +112,9 @@ public class Song implements Serializable {
 
     public void setSourceURL(String sourceURL) {
         SourceURL = sourceURL;
+    }
+
+    public Uri getUri() {
+        return Uri.fromFile(new File(filePath));
     }
 }

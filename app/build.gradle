@@ -61,4 +61,7 @@ dependencies {
 
     //cloudinary
     implementation 'com.cloudinary:cloudinary-android:3.0.2'
+
+    //j audio tagger
+    implementation 'org.jaudiotagger:jaudiotagger:2.0.1'
 }
