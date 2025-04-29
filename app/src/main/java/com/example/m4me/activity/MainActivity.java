@@ -1,9 +1,11 @@
 package com.example.m4me.activity;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -11,6 +13,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -49,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     public static FirebaseFirestore db;
 
     private RelativeLayout layout_bottom;
-    private ImageView img_song, img_play_or_pause, img_clear;
+    private ImageView img_song, img_play_or_pause, img_clear, img_setting;
     private TextView tv_songTitle, tv_songArtist;
 
     private SeekBar seekBar;
@@ -59,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
     private Song mSong;
     private boolean isPlaying;
 
+    private Dialog dialog;
+    private CheckBox cb_settingLightSensor, cb_settingShakeSensor;
+
+
+    private static final String fName = "settings.xml";
+    private SharedPreferences sharedPreferences;
 
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -118,6 +128,41 @@ public class MainActivity extends AppCompatActivity {
         loadFragment(new HomeFragment());
 
         handleBottomNavigationBarClick();
+
+        // dialog
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.setting_dialog);
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawableResource(R.drawable.custom_dialog_background);
+        dialog.setCancelable(true);
+
+        cb_settingLightSensor = dialog.findViewById(R.id.cb_settingLightSensor);
+        cb_settingShakeSensor = dialog.findViewById(R.id.cb_settingShakeSensor);
+
+
+        img_setting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.show();
+            }
+        });
+
+        cb_settingLightSensor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveSettings();
+            }
+        });
+
+        cb_settingShakeSensor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveSettings();
+            }
+        });
+
+        sharedPreferences = getSharedPreferences(fName, MODE_PRIVATE);
+        readSettings();
     }
 
     private void initViews(){
@@ -129,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         tv_songArtist = findViewById(R.id.tv_songArtist);
         tv_songTitle = findViewById(R.id.tv_songTitle);
         seekBar = findViewById(R.id.seekBar);
+        img_setting = findViewById(R.id.img_setting);
     }
 
     private void handleBottomNavigationBarClick(){
@@ -310,5 +356,19 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("SongLoader", "Error reading audio file: " );
         }
+    }
+
+    private void saveSettings(){
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("light_sensor", cb_settingLightSensor.isChecked());
+        editor.putBoolean("shake_sensor", cb_settingShakeSensor.isChecked());
+        editor.commit();
+    }
+
+    private void readSettings(){
+        Boolean lightSensor = sharedPreferences.getBoolean("light_sensor", false);
+        Boolean shakeSensor = sharedPreferences.getBoolean("shake_sensor", false);
+        cb_settingLightSensor.setChecked(lightSensor);
+        cb_settingShakeSensor.setChecked(shakeSensor);
     }
 }

@@ -83,6 +83,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Song song = songList.get(position);
+
         // offline
         if (activityCode == 3){
             Glide.with(context).load(song.getThumbnailBitmap()).into(holder.img_thumbnail);
@@ -91,30 +92,30 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
 
             loadThumbnailFrom(song, holder.img_thumbnail);
 
-            holder.cardView.setOnClickListener(new View.OnClickListener() {
+            holder.img_remove.setImageResource(R.drawable.baseline_delete_24);
+            holder.img_remove.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int currentSongIndex = position;
-                    startMusicService(currentSongIndex);
-                    clickChangeActivity(song);
+                    deleteSong(song.getFilePath());
+                    if (position < songList.size()){
+                        songList.remove(position);
+                        notifyItemRemoved(position);
+                        if (position < songList.size()){
+                            notifyItemRangeChanged(position, songList.size() - position);
+                        }
+                        Toast.makeText(context, "deleted", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
 
+        // idk
         if (activityCode <= 2){
             if (song.getThumbnailUrl() != ""){
                 Glide.with(context).load(song.getThumbnailUrl()).into(holder.img_thumbnail);
             }
             holder.tv_songTitle.setText(shortenString(song.getTitle()));
             holder.tv_songArtist.setText(song.getArtistName());
-            holder.cardView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int currentSongIndex = position;
-                    startMusicService(currentSongIndex);
-                    clickChangeActivity(song);
-                }
-            });
 
             List<String> tags = song.getTagNames();
             if (tags != null && !tags.isEmpty()) {
@@ -126,6 +127,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                 holder.rv_tags.setAdapter(null);
             }
 
+            // the normal one
             if(activityCode == 1){
                 if (specialCode == 1){
                     holder.img_remove.setImageResource(R.drawable.baseline_delete_24);
@@ -153,6 +155,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                 });
             }
 
+            // playlist management
             if (activityCode == 2){
                 holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
@@ -182,6 +185,15 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
                 });
             }
         }
+
+        holder.cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int currentSongIndex = position;
+                startMusicService(currentSongIndex);
+                clickChangeActivity(song);
+            }
+        });
     }
 
     private void loadThumbnailFrom(Song song, ImageView img){
@@ -202,6 +214,14 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
         } catch (Exception e) {
             Log.e("SongLoader", "Error reading audio file: " );
         }
+    }
+
+    public boolean deleteSong(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            return file.delete();
+        }
+        return false;
     }
 
     private void removeSongFromPlaylist(int position, String playlistID){

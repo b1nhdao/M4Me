@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaScannerConnection;
@@ -116,9 +117,12 @@ public class SongPlayingActivity extends AppCompatActivity {
     private RecyclerView rv_comment;
     private EditText edt_content;
     private ImageView img_send;
-//    private ImageView btnCloseComments;
     private List<Comment> commentList = new ArrayList<>();
     private CommentAdapter_Comment_Vertically commentAdapter;
+
+    //settings
+    private final static String fName = "settings.xml";
+    private SharedPreferences sharedPreferences;
 
     private void setupShakeDetector() {
         shakeManager = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
@@ -178,6 +182,9 @@ public class SongPlayingActivity extends AppCompatActivity {
 
         initViews();
 
+        sharedPreferences = getSharedPreferences(fName, MODE_PRIVATE);
+        readSettings();
+
         Bundle bundle = getIntent().getExtras();
         if(bundle != null){
             songList = (List<Song>) bundle.get("list_object_song");
@@ -210,8 +217,17 @@ public class SongPlayingActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
 
-        setupShakeDetector();
-        shakeManager.start();
+//        if (readSettings()){
+//            setupShakeDetector();
+//            shakeManager.start();
+//        }
+//        else {
+//            if(shakeManager != null){
+//                shakeManager.stop();
+//                shakeManager.cleanup();
+//            }
+//        }
+
 
         if (shakeManager != null) {
             shakeManager.registerServiceClearListener();
@@ -707,6 +723,10 @@ public class SongPlayingActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e("SongLoader", "Error reading audio file: " );
         }
+    }
+
+    private boolean readSettings(){
+        return sharedPreferences.getBoolean("shake_sensor", false);
     }
 
     @Override

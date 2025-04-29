@@ -8,4 +8,15 @@
     android:background="@color/black"
     tools:context=".activity.BlackScreenActivity">
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="294dp"
+        android:layout_height="209dp"
+        android:layout_marginTop="68dp"
+        android:text="IF YOU ARE SEEING THIS (AND DONT KNOW WTF IS GOING ON), SO FIRSTLY, ITS NOT A BUG, ITS A FREATURE AND ITS PROBABLY THE LIGHT AMBIENT IS JUST TOO DARK, GO SETTING TO TURN IT OF OR JUST BRING YOUR DEVICE TO SOMEWHER ... BRIGHTER . \n IN FACT, I DONT KNOW HOW TO MAKE YOUR DEVICE ACTUALLY TURN OFF SO THIS IS JUST A STUPID WAY TO DO IT CUZ IM FORCED TO USE AT LEAST 2 SENSORS, YA KNOW"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

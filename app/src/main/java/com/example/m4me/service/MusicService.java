@@ -2,22 +2,18 @@ package com.example.m4me.service;
 
 import static com.example.m4me.MyApplication.CHANNEL_ID;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -34,27 +30,14 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.m4me.R;
-import com.example.m4me.activity.MainActivity;
 import com.example.m4me.activity.SongPlayingActivity;
 import com.example.m4me.boardcastReceiver.MyReceiver;
 import com.example.m4me.model.Song;
 import com.example.m4me.sensor.LightSensor;
+import com.example.m4me.sensor.ShakeSensor;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import java.util.Random;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.PowerManager;
-import android.view.WindowManager;
-
-import org.jaudiotagger.audio.AudioFile;
-import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.datatype.Artwork;
 
 
 public class MusicService extends Service {
@@ -87,6 +70,13 @@ public class MusicService extends Service {
     public static final String Channel_ID = "music_channel";
 
     private LightSensor lightSensor;
+    private ShakeSensor shakeSensor;
+
+    private SharedPreferences sharedPreferences;
+    private static final String fName = "settings.xml";
+
+    private Boolean lightSensorEnabled;
+    private Boolean shakeSensorEnabled;
 
     public MusicService() {
     }
@@ -100,6 +90,10 @@ public class MusicService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d("Service", "Service onCreate");
+
+        sharedPreferences = getSharedPreferences(fName, MODE_PRIVATE);
+        readSettings();
+
         exoPlayer = new ExoPlayer.Builder(this).build();
         exoPlayerInstance = exoPlayer;
         exoPlayer.addListener(new Player.Listener() {
@@ -122,10 +116,31 @@ public class MusicService extends Service {
                 }
             }
         });
-        initLightSensorManager();
+
+        setupLightSensor();
+        setupShakeDetector();
+        if (shakeSensorEnabled) {
+            shakeSensor.start();
+        }
     }
 
-    private void initLightSensorManager() {
+    private void setupShakeDetector() {
+        shakeSensor = new ShakeSensor(this, new ShakeSensor.OnShakeListener() {
+            @Override
+            public void onShake() {
+                if (isPlaying && shakeSensorEnabled){
+                    sendActionToActivity(ACTION_NEXT);
+                    playNextSong();
+                }
+            }
+        });
+
+        if (!shakeSensor.hasAccelerometer()) {
+            Toast.makeText(this, "get a new phone bruh !", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setupLightSensor() {
         lightSensor = new LightSensor(this);
 
         // Set up callback for light changes
@@ -163,6 +178,7 @@ public class MusicService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Bundle bundle = intent.getExtras();
+        readSettings();
         if(bundle != null){
             Song song = (Song) bundle.get("object_song");
             if (song != null) {
@@ -430,6 +446,11 @@ public class MusicService extends Service {
             intent.putExtra("duration", exoPlayer.getDuration());
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
+    }
+
+    private void readSettings(){
+        lightSensorEnabled = sharedPreferences.getBoolean("light_sensor", false);
+        shakeSensorEnabled = sharedPreferences.getBoolean("shake_sensor", false);
     }
 
     @Override

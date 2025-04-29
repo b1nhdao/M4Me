@@ -2,6 +2,7 @@ package com.example.m4me.sensor;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -13,7 +14,7 @@ import com.example.m4me.activity.BlackScreenActivity;
 
 public class LightSensor {
     private static final String TAG = "LightSensorManager";
-    private static final float LIGHT_THRESHOLD = 20.0f; // Adjust based on testing
+    private static final float LIGHT_THRESHOLD = 5.0f;
 
     private final Context context;
     private final SensorManager sensorManager;
@@ -33,14 +34,13 @@ public class LightSensor {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         lightSensor = sensorManager != null ? sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) : null;
 
-        // Initialize the light sensor listener
+        // initialize sensor listener
         lightSensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
                 float lightLevel = event.values[0];
                 Log.d(TAG, "Light level: " + lightLevel);
 
-                // If it's too dark (likely in pocket)
                 if (lightLevel < LIGHT_THRESHOLD && !isDarkMode) {
                     turnOffScreen();
                     isDarkMode = true;
@@ -48,7 +48,6 @@ public class LightSensor {
                         lightChangeListener.onDarkDetected();
                     }
                 }
-                // If it's bright enough and we were in dark mode
                 else if (lightLevel >= LIGHT_THRESHOLD && isDarkMode) {
                     releaseWakeLock();
                     isDarkMode = false;
@@ -60,7 +59,7 @@ public class LightSensor {
 
             @Override
             public void onAccuracyChanged(Sensor sensor, int accuracy) {
-                // Not needed for this implementation
+
             }
         };
     }
