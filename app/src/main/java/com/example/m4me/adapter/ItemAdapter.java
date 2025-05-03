@@ -38,7 +38,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdapter_Global_Vertically.MyViewHolder> {
+public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.MyViewHolder> {
 
     public enum Type {
         SONG,
@@ -59,7 +59,7 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
     // code 1 = from upload playlist manager activity
     private int specialCode;
 
-    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type) {
+    public ItemAdapter(Context context, Object dataList, Type type) {
         this.context = context;
         this.type = type;
 
@@ -72,7 +72,7 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
         }
     }
 
-    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type, String songID){
+    public ItemAdapter(Context context, Object dataList, Type type, String songID){
         this.context = context;
         this.type = type;
         if(type == Type.CREATEDLIST){
@@ -81,7 +81,7 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
         }
     }
 
-    public ItemAdapter_Global_Vertically(Context context, Object dataList, Type type, int specialCode){
+    public ItemAdapter(Context context, Object dataList, Type type, int specialCode){
         this.context = context;
         this.type = type;
         if(type == Type.PLAYLIST){
@@ -110,7 +110,7 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
 
                 List<String> songTags = song.getTagNames();
                 if (songTags != null && !songTags.isEmpty()) {
-                    TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, songTags);
+                    TagAdapter tagAdapter = new TagAdapter(context, songTags);
                     LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
                     holder.rv_tags.setLayoutManager(layoutManager);
                     holder.rv_tags.setAdapter(tagAdapter);
@@ -139,7 +139,7 @@ public class ItemAdapter_Global_Vertically extends RecyclerView.Adapter<ItemAdap
 
                 List<String> playlistTags = playlist.getTagNames();
                 if (playlistTags != null && !playlistTags.isEmpty()) {
-                    TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, playlistTags);
+                    TagAdapter tagAdapter = new TagAdapter(context, playlistTags);
                     LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
                     holder.rv_tags.setLayoutManager(layoutManager);
                     holder.rv_tags.setAdapter(tagAdapter);

@@ -1,9 +1,7 @@
 package com.example.m4me.fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -18,13 +16,10 @@ import android.widget.Button;
 
 import com.example.m4me.activity.MainActivity;
 import com.example.m4me.R;
-import com.example.m4me.adapter.PlaylistAdapter_Home_Horizontally;
-import com.example.m4me.adapter.SongAdapter_Home_Horizontally;
+import com.example.m4me.adapter.PlaylistHomeAdapter;
+import com.example.m4me.adapter.SongHomeAdapter;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
-import com.example.m4me.service.MusicService;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -51,8 +46,8 @@ public class HomeFragment extends Fragment {
     private List<Playlist> playlistList = new ArrayList<>();
     Button btn_testService, btn_testServiceStop;
 
-    SongAdapter_Home_Horizontally adapterSong;
-    PlaylistAdapter_Home_Horizontally adapterPlaylist1;
+    SongHomeAdapter adapterSong;
+    PlaylistHomeAdapter adapterPlaylist1;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -93,12 +88,12 @@ public class HomeFragment extends Fragment {
         btn_testServiceStop = view.findViewById(R.id.btn_testServiceStop);
 
         rv_song.setLayoutManager(new GridLayoutManager(getContext(),3, RecyclerView.HORIZONTAL, false));
-        adapterSong = new SongAdapter_Home_Horizontally(getContext(), songList);
+        adapterSong = new SongHomeAdapter(getContext(), songList);
         rv_song.setAdapter(adapterSong);
         getSongsFromDatabase();
 
         rv_playlist_1.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        adapterPlaylist1 = new PlaylistAdapter_Home_Horizontally(getContext(), playlistList);
+        adapterPlaylist1 = new PlaylistHomeAdapter(getContext(), playlistList);
         rv_playlist_1.setAdapter(adapterPlaylist1);
         getPlaylistsFromDatabase();
 

@@ -112,8 +112,6 @@ public class LibraryFragment extends Fragment {
         cardView_downloadedSong.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                downloadedSongList = getDownloadedSongs();
-
                 Intent intent = new Intent(getContext(), PlaylistActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("object_offline_playlist", (Serializable) downloadedSongList);
@@ -122,46 +120,5 @@ public class LibraryFragment extends Fragment {
             }
         });
         return view;
-    }
-
-    private List<Song> getDownloadedSongs(){
-        List<Song> downloadedSongList  = new ArrayList<>();
-
-        File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-
-        File[] files = downloadDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".mp3");
-            }
-        });
-
-        if (files != null) {
-            for (File file : files) {
-                try {
-                    //  jAudiotagger to read metadata
-                    AudioFile audioFile = AudioFileIO.read(file);
-                    Tag tag = audioFile.getTag();
-
-                    if (tag != null) {
-                        Song song = new Song();
-
-                        song.setTitle(tag.getFirst(FieldKey.TITLE));
-                        song.setArtistName(tag.getFirst(FieldKey.ARTIST));
-                        song.setFilePath(file.getAbsolutePath());
-
-                        downloadedSongList.add(song);
-                    }
-                } catch (Exception e) {
-                    Log.e("SongLoader", "Error reading audio file: " + file.getName(), e);
-
-                    Song song = new Song();
-                    song.setTitle(file.getName());
-                    song.setFilePath(file.getAbsolutePath());
-                    downloadedSongList.add(song);
-                }
-            }
-        }
-        return downloadedSongList;
     }
 }

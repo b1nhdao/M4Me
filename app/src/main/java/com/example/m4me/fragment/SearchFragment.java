@@ -3,7 +3,6 @@ package com.example.m4me.fragment;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,7 +17,8 @@ import android.widget.ToggleButton;
 
 import com.example.m4me.R;
 import com.example.m4me.activity.MainActivity;
-import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
+import com.example.m4me.adapter.ItemAdapter;
+import com.example.m4me.helpers.SearchHelper;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
@@ -28,9 +28,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
@@ -38,11 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link SearchFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class SearchFragment extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
@@ -62,23 +55,16 @@ public class SearchFragment extends Fragment {
     private List<Playlist> playlistList = new ArrayList<>();
     private List<User> userList = new ArrayList<>();
 
-    ItemAdapter_Global_Vertically adapter;
+    ItemAdapter adapter;
 
     private ToggleButton[] toggleButtons;
+
+    private SearchHelper searchHelper = new SearchHelper(getContext(), db);
 
     public SearchFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SearchFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static SearchFragment newInstance(String param1, String param2) {
         SearchFragment fragment = new SearchFragment();
         Bundle args = new Bundle();
@@ -148,25 +134,24 @@ public class SearchFragment extends Fragment {
     private void searchOnClick(String action ,String keyword){
         switch (action){
             case "Bài hát":
-                getSongsFromDatabaseByKeyword(keyword);
-                adapter = new ItemAdapter_Global_Vertically(getContext(), songList, ItemAdapter_Global_Vertically.Type.SONG);
+                adapter = new ItemAdapter(getContext(), songList, ItemAdapter.Type.SONG);
                 rv_result.setAdapter(adapter);
+                searchHelper.getSongsByKeyword(keyword, songList, adapter);
                 break;
             case "Playlist":
-                getPlaylistsFromDatabaseByKeyword(keyword);
-                adapter = new ItemAdapter_Global_Vertically(getContext(), playlistList, ItemAdapter_Global_Vertically.Type.PLAYLIST);
+                adapter = new ItemAdapter(getContext(), playlistList, ItemAdapter.Type.PLAYLIST);
                 rv_result.setAdapter(adapter);
+                searchHelper.getPlaylistsByKeyword(keyword, playlistList, adapter);
                 break;
             case "Thể loại":
-                getSongsFromDatabaseByTagTitle(keyword);
-                adapter = new ItemAdapter_Global_Vertically(getContext(), songList, ItemAdapter_Global_Vertically.Type.SONG);
+                adapter = new ItemAdapter(getContext(), songList, ItemAdapter.Type.SONG);
                 rv_result.setAdapter(adapter);
-//                Toast.makeText(getContext(), "Tính năng này chưa (sẽ không) có", Toast.LENGTH_SHORT).show();
+                getSongsFromDatabaseByTagTitle(keyword);
                 break;
             case "User":
-                getUsersFromDatabaseByKeyword(keyword);
-                adapter = new ItemAdapter_Global_Vertically(getContext(), userList, ItemAdapter_Global_Vertically.Type.USER);
+                adapter = new ItemAdapter(getContext(), userList, ItemAdapter.Type.USER);
                 rv_result.setAdapter(adapter);
+                searchHelper.getUsersByKeyword(keyword, userList, adapter);
                 break;
         }
     }
@@ -180,174 +165,36 @@ public class SearchFragment extends Fragment {
         return "Maybe something wrong, please just choose a category that you want to search again :D";
     }
 
-    // i know you will laugh at me when i have 4 different functions to fetch data
-
-    private void getPlaylistsFromDatabaseByKeyword(String keyword){
-        String keywordLower = keyword.toLowerCase();
-        db.collection("playlists").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if(task.isSuccessful()){
-                    playlistList.clear();
-                    for (QueryDocumentSnapshot document : task.getResult()){
-                        Playlist playlist = document.toObject(Playlist.class);
-                        String playlistTitleLower = playlist.getTitle().toLowerCase();
-
-                        if (playlistTitleLower.contains(keywordLower)){
-                            DocumentReference artistRef = document.getDocumentReference("Creator");
-                            if (artistRef != null){
-                                artistRef.get().addOnSuccessListener(snapshot -> {
-                                    if(snapshot.exists()){
-                                        String creator = snapshot.getString("displayName");
-                                        playlist.setCreatorName(creator);
-                                    }
-                                    adapter.notifyDataSetChanged();
-                                });
-                            }
-
-                            List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
-                            if (tagRefs != null && !tagRefs.isEmpty()) {
-                                List<String> tagNames = new ArrayList<>();
-                                AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
-
-                                for (DocumentReference tagReference : tagRefs) {
-                                    tagReference.get().addOnSuccessListener(tagSnapshot -> {
-                                        if (tagSnapshot.exists()) {
-                                            String tagName = tagSnapshot.getString("Name");
-                                            if (tagName != null) {
-                                                tagNames.add(tagName);
-                                            }
-//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
-                                        }
-
-                                        // Check if all tag requests are completed
-                                        if (pendingTags.decrementAndGet() == 0) {
-                                            playlist.setTagNames(tagNames);
-                                            adapter.notifyDataSetChanged();
-                                        }
-                                    }).addOnFailureListener(e -> {
-                                        Log.e("GetTags", "Error getting tag: ", e);
-                                        if (pendingTags.decrementAndGet() == 0) {
-                                            playlist.setTagNames(tagNames);
-                                            adapter.notifyDataSetChanged();
-                                        }
-                                    });
-                                } // loop getting tags
-                            } // check if tagRef null
-                            else {
-                                playlist.setTagNames(new ArrayList<>());
-                            }
-                            playlistList.add(playlist);
-                            if (playlistList.size() == task.getResult().size()){
-                                adapter.notifyDataSetChanged();
-                            }
-                        } // check if contain keyword
-
-                    } // end for loop getting document in value
-                } // end check if task
-            }
-        });
-    }
-
-    private void getSongsFromDatabaseByKeyword(String keyword){
-        String keywordLower = keyword.toLowerCase();
-        db.collection("songs").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()){
-                    songList.clear();
-                    for (QueryDocumentSnapshot document : task.getResult()){
-                        Song song = document.toObject(Song.class);
-                        String songTitleToLower = song.getTitle().toLowerCase();
-
-                        if (songTitleToLower.contains(keywordLower)){
-                            DocumentReference artistRef = document.getDocumentReference("Artist");
-                            if (artistRef != null){
-                                //artist ref
-                                artistRef.get().addOnSuccessListener(snapshot -> {
-                                    if(snapshot.exists()){
-                                        String artistName = snapshot.getString("displayName");
-                                        song.setArtistName(artistName);
-                                    }
-                                    adapter.notifyDataSetChanged();
-                                });
-                            }
-
-                            //tag ref
-                            List<DocumentReference> tagRefs = (List<DocumentReference>) document.get("Tags");
-                            if (tagRefs != null && !tagRefs.isEmpty()) {
-                                List<String> tagNames = new ArrayList<>();
-                                AtomicInteger pendingTags = new AtomicInteger(tagRefs.size());
-
-                                for (DocumentReference tagReference : tagRefs) {
-                                    tagReference.get().addOnSuccessListener(tagSnapshot -> {
-                                        if (tagSnapshot.exists()) {
-                                            String tagName = tagSnapshot.getString("Name");
-                                            if (tagName != null) {
-                                                tagNames.add(tagName);
-                                            }
-//                                            Log.d("GetTag", "getSongsFromDatabase: " + tagName);
-                                        }
-
-                                        // Check if all tag requests are completed
-                                        if (pendingTags.decrementAndGet() == 0) {
-                                            song.setTagNames(tagNames);
-                                            adapter.notifyDataSetChanged();
-                                        }
-                                    }).addOnFailureListener(e -> {
-                                        Log.e("GetTags", "Error getting tag: ", e);
-                                        if (pendingTags.decrementAndGet() == 0) {
-                                            song.setTagNames(tagNames);
-                                            adapter.notifyDataSetChanged();
-                                        }
-                                    });
-                                } // loop getting tags
-                            } // check if tagRef null
-                            else {
-                                song.setTagNames(new ArrayList<>());
-                            }
-                            songList.add(song);
-                            if(songList.size() == task.getResult().size()){
-                                adapter.notifyDataSetChanged();
-                            }
-                        } // check if contain keyword
-                    } // end for loop getting doc in value
-                }
-            }
-        });
-    }
-
-
-    public void getSongsFromDatabaseByTagID(String tagID){
-        DocumentReference tagRef = db.collection("tags").document(tagID);
-        Log.d("tagQuery", "getSongsFromDatabaseByTagID: " + tagRef.getPath());
-
-        db.collection("songs").whereArrayContains("Tags", tagRef).addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                   if (value != null){
-                       songList.clear();
-
-                       for (QueryDocumentSnapshot document : value){
-                           Song song = document.toObject(Song.class);
-                           songList.add(song);
-                           Log.d("TagSongs", "Found song: " + song.getTitle());
-
-                           List<DocumentReference> tags = (List<DocumentReference>) document.get("Tags");
-                           Log.d("TagQuery", "Song " + document.getId() + " has " + tags.size() + " tags:");
-                           for (DocumentReference ref : tags) {
-                               Log.d("TagQuery", "  - Tag: " + ref.getPath());
-                           }
-                       } // end for loop in value
-                       Log.d("TagSongs", "Total songs found: " + songList.size());
-                       adapter.notifyDataSetChanged();
-                   } // end check value not null
-                else {
-                       Log.w("TagSongs", "Error getting songs: ", error);
-                   }
-            } // end snapshot listener
-        });
-    }
+//    public void getSongsFromDatabaseByTagID(String tagID){
+//        DocumentReference tagRef = db.collection("tags").document(tagID);
+//        Log.d("tagQuery", "getSongsFromDatabaseByTagID: " + tagRef.getPath());
+//
+//        db.collection("songs").whereArrayContains("Tags", tagRef).addSnapshotListener(new EventListener<QuerySnapshot>() {
+//            @Override
+//            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+//                   if (value != null){
+//                       songList.clear();
+//
+//                       for (QueryDocumentSnapshot document : value){
+//                           Song song = document.toObject(Song.class);
+//                           songList.add(song);
+//                           Log.d("TagSongs", "Found song: " + song.getTitle());
+//
+//                           List<DocumentReference> tags = (List<DocumentReference>) document.get("Tags");
+//                           Log.d("TagQuery", "Song " + document.getId() + " has " + tags.size() + " tags:");
+//                           for (DocumentReference ref : tags) {
+//                               Log.d("TagQuery", "  - Tag: " + ref.getPath());
+//                           }
+//                       } // end for loop in value
+//                       Log.d("TagSongs", "Total songs found: " + songList.size());
+//                       adapter.notifyDataSetChanged();
+//                   } // end check value not null
+//                else {
+//                       Log.w("TagSongs", "Error getting songs: ", error);
+//                   }
+//            } // end snapshot listener
+//        });
+//    }
 
     private void getSongsFromDatabaseByTagTitle(String tagTitle) {
         String keywordLower = tagTitle.toLowerCase();
@@ -385,7 +232,6 @@ public class SearchFragment extends Fragment {
                     }
                 });
     }
-
 
     // once again, thanks chatGPT (it sucks)
     private void querySongsWithMultipleTags(List<DocumentReference> tagRefs) {
@@ -472,45 +318,6 @@ public class SearchFragment extends Fragment {
                     }
                 });
     }
-
-
-
-
-    private void getUsersFromDatabaseByKeyword(String keyword) {
-        userList.clear();
-        String keywordLower = keyword.toLowerCase();
-
-        db.collection("users").addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                if (error != null) {
-                    Log.w("getUser", "error: ", error);
-                    return;
-                }
-
-                if (value != null) {
-                    for (QueryDocumentSnapshot document : value) {
-                        User user = document.toObject(User.class);
-
-                        String userDisplayLower = user.getDisplayName().toLowerCase();
-
-                        if (userDisplayLower.contains(keywordLower)) {
-                            userList.add(user);
-                        }
-                    }
-
-                    adapter.notifyDataSetChanged();
-                } else {
-                    Log.w("GetUserList", "Error getting documents. null");
-                }
-            }
-        });
-    }
-
-    // FIXME: please make this function work and make the code cleaner
-//    private void getDataFromDatabaseByKeyword(String collection, String keyword){
-//
-//    }
 
     // legacy code to see how stupid i am
 

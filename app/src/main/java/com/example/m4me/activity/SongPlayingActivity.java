@@ -41,8 +41,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
-import com.example.m4me.adapter.CommentAdapter_Comment_Vertically;
-import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
+import com.example.m4me.adapter.CommentAdapter;
+import com.example.m4me.adapter.ItemAdapter;
 import com.example.m4me.model.Comment;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
@@ -50,12 +50,10 @@ import com.example.m4me.sensor.ShakeSensor;
 import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FieldValue;
@@ -109,7 +107,7 @@ public class SongPlayingActivity extends AppCompatActivity {
     private RecyclerView rv_playlist;
     private List<Playlist> playlistCreatedList = new ArrayList<>();
 
-    private ItemAdapter_Global_Vertically adapter;
+    private ItemAdapter adapter;
 
     // bottom sheet
     private BottomSheetBehavior<ConstraintLayout> commentBottomSheetBehavior;
@@ -118,7 +116,7 @@ public class SongPlayingActivity extends AppCompatActivity {
     private EditText edt_content;
     private ImageView img_send;
     private List<Comment> commentList = new ArrayList<>();
-    private CommentAdapter_Comment_Vertically commentAdapter;
+    private CommentAdapter commentAdapter;
 
     //settings
     private final static String fName = "settings.xml";
@@ -217,18 +215,6 @@ public class SongPlayingActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_activity"));
         LocalBroadcastManager.getInstance(this).registerReceiver(seekbarReceiver, new IntentFilter("update_seekbar"));
 
-//        if (readSettings()){
-//            setupShakeDetector();
-//            shakeManager.start();
-//        }
-//        else {
-//            if(shakeManager != null){
-//                shakeManager.stop();
-//                shakeManager.cleanup();
-//            }
-//        }
-
-
         if (shakeManager != null) {
             shakeManager.registerServiceClearListener();
         }
@@ -319,7 +305,7 @@ public class SongPlayingActivity extends AppCompatActivity {
     }
 
     private void imgCommentOnClick(){
-        commentAdapter = new CommentAdapter_Comment_Vertically(this, commentList);
+        commentAdapter = new CommentAdapter(this, commentList);
         rv_comment.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rv_comment.setAdapter(commentAdapter);
         commentBottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -336,7 +322,7 @@ public class SongPlayingActivity extends AppCompatActivity {
                 if(item.getItemId() == R.id.addToPlaylist){
                     Log.d("menuclick", "onMenuItemClick: tralalero tralala");
                     getAllPlaylistFromUser(user.getUid());
-                    adapter = new ItemAdapter_Global_Vertically(SongPlayingActivity.this, playlistCreatedList, ItemAdapter_Global_Vertically.Type.CREATEDLIST, currentSong.getID());
+                    adapter = new ItemAdapter(SongPlayingActivity.this, playlistCreatedList, ItemAdapter.Type.CREATEDLIST, currentSong.getID());
                     rv_playlist.setAdapter(adapter);
 
                     dialog.show();

@@ -14,12 +14,12 @@ import com.example.m4me.R;
 
 import java.util.List;
 
-public class TagAdapter_Global_Horizontally extends RecyclerView.Adapter<TagAdapter_Global_Horizontally.MyViewHolder> {
+public class TagAdapter extends RecyclerView.Adapter<TagAdapter.MyViewHolder> {
 
     Context context;
     List<String> tagNameList;
 
-    public TagAdapter_Global_Horizontally(Context context, List<String> tagNameList) {
+    public TagAdapter(Context context, List<String> tagNameList) {
         this.context = context;
         this.tagNameList = tagNameList;
     }

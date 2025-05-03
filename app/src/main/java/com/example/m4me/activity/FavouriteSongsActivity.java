@@ -17,13 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.m4me.R;
-import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
+import com.example.m4me.adapter.SongPlaylistAdapter;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
 import com.example.m4me.service.MusicService;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -44,7 +42,7 @@ public class FavouriteSongsActivity extends AppCompatActivity {
 
     private RecyclerView rv_song;
     private Button btn_playNow;
-    private SongAdapter_Playlist_Vertically adapter;
+    private SongPlaylistAdapter adapter;
 
     private FirebaseAuth auth = FirebaseAuth.getInstance();
     private FirebaseUser user = auth.getCurrentUser();
@@ -75,7 +73,7 @@ public class FavouriteSongsActivity extends AppCompatActivity {
 
         getFavouriteSongs(user.getUid());
 
-        adapter = new SongAdapter_Playlist_Vertically(this, songList, 1);
+        adapter = new SongPlaylistAdapter(this, songList, 1);
         rv_song.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rv_song.setAdapter(adapter);
     }

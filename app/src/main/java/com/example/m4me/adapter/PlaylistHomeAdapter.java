@@ -16,89 +16,80 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
-import com.example.m4me.model.Song;
-import com.example.m4me.service.MusicService;
+import com.example.m4me.activity.PlaylistActivity;
+import com.example.m4me.model.Playlist;
+import com.example.m4me.model.Tag;
 
 import java.util.List;
 
-public class SongAdapter_Home_Horizontally extends RecyclerView.Adapter<SongAdapter_Home_Horizontally.MyViewHolder> {
+public class PlaylistHomeAdapter extends RecyclerView.Adapter<PlaylistHomeAdapter.MyViewHolder> {
 
     private Context context;
-    private List<Song> songList;
+    private List<Playlist> playlistList;
+    private Tag tag;
 
-    public SongAdapter_Home_Horizontally(Context context, List<Song> songList) {
+    public PlaylistHomeAdapter(Context context, List<Playlist> playlistList) {
         this.context = context;
-        this.songList = songList;
+        this.playlistList = playlistList;
     }
 
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.song_item_horizontally, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.playlist_item_horizontally, parent, false);
         return new MyViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        Song song = songList.get(position);
-        holder.tv_songTitle.setText(shortenString(song.getTitle(), 28));
-        holder.tv_artistName.setText(song.getArtistName());
-        if (song.getThumbnailUrl() != null){
-            Glide.with(context)
-                    .load(song.getThumbnailUrl())
-                    .into(holder.img_thumbnail);
+        Playlist playlist = playlistList.get(position);
+        if (playlist.getThumbnailURL() != null){
+            Glide.with(context).load(playlist.getThumbnailURL()).into(holder.img_thumbnail);
         }
-
+        holder.tv_playlistTitle.setText(shortenString(playlist.getTitle()));
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                clickStartService(song);
+                Intent intent = new Intent(context, PlaylistActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("object_playlist", playlist);
+                intent.putExtras(bundle);
+                context.startActivity(intent);
             }
         });
-
-        List<String> tags = song.getTagNames();
+        List<String> tags = playlist.getTagNames();
         if (tags != null && !tags.isEmpty()) {
-            TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, tags);
+            TagAdapter tagAdapter = new TagAdapter(context, tags);
             LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
             holder.rv_tags.setLayoutManager(layoutManager);
             holder.rv_tags.setAdapter(tagAdapter);
         } else {
             holder.rv_tags.setAdapter(null);
-        }
-    }
+        }    }
 
-    private String shortenString(String s, int charMaxLength){
-        if (s.length() >= charMaxLength){
-            return s.substring(0,charMaxLength) + "...";
+    private String shortenString(String s){
+        if (s.length() >= 32){
+            return s.substring(0,32) + "...";
         }
         return s;
     }
 
-    private void clickStartService(Song song){
-        Intent intent = new Intent(context, MusicService.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("object_song", song);
-        intent.putExtras(bundle);
-        context.startService(intent);
-    }
-
     @Override
     public int getItemCount() {
-        return songList.size();
+        return playlistList.size();
     }
 
     class MyViewHolder extends RecyclerView.ViewHolder {
         private CardView cardView;
         private ImageView img_thumbnail;
-        private TextView tv_songTitle, tv_artistName, tv_tags;
-        private RecyclerView rv_tags;
+        private TextView tv_playlistTitle;
+        RecyclerView rv_tags;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.cardView);
             img_thumbnail = itemView.findViewById(R.id.img_thumbnail);
-            tv_songTitle = itemView.findViewById(R.id.tv_songTitle);
-            tv_artistName = itemView.findViewById(R.id.tv_songArtist);
+            tv_playlistTitle = itemView.findViewById(R.id.tv_playlistTitle);
             rv_tags = itemView.findViewById(R.id.rv_tags);
         }
     }

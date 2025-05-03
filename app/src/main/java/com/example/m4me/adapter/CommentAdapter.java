@@ -15,12 +15,12 @@ import com.example.m4me.model.Comment;
 
 import java.util.List;
 
-public class CommentAdapter_Comment_Vertically extends RecyclerView.Adapter<CommentAdapter_Comment_Vertically.MyViewHolder> {
+public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.MyViewHolder> {
 
     private Context context;
     private List<Comment> commentList;
 
-    public CommentAdapter_Comment_Vertically(Context context, List<Comment> commentList) {
+    public CommentAdapter(Context context, List<Comment> commentList) {
         this.context = context;
         this.commentList = commentList;
     }

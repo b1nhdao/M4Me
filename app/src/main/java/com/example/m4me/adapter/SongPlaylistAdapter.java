@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -40,7 +39,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.datatype.Artwork;
 
@@ -48,7 +46,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
-public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAdapter_Playlist_Vertically.MyViewHolder> {
+public class SongPlaylistAdapter extends RecyclerView.Adapter<SongPlaylistAdapter.MyViewHolder> {
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
@@ -59,13 +57,13 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
     private int specialCode;
     private String platlistID;
 
-    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList, int activityCode) {
+    public SongPlaylistAdapter(Context context, List<Song> songList, int activityCode) {
         this.context = context;
         this.songList = songList;
         this.activityCode = activityCode;
     }
 
-    public SongAdapter_Playlist_Vertically(Context context, List<Song> songList, int activityCode, int specialCode, String platlistID) {
+    public SongPlaylistAdapter(Context context, List<Song> songList, int activityCode, int specialCode, String platlistID) {
         this.context = context;
         this.songList = songList;
         this.activityCode = activityCode;
@@ -119,7 +117,7 @@ public class SongAdapter_Playlist_Vertically extends RecyclerView.Adapter<SongAd
 
             List<String> tags = song.getTagNames();
             if (tags != null && !tags.isEmpty()) {
-                TagAdapter_Global_Horizontally tagAdapter = new TagAdapter_Global_Horizontally(context, tags);
+                TagAdapter tagAdapter = new TagAdapter(context, tags);
                 LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
                 holder.rv_tags.setLayoutManager(layoutManager);
                 holder.rv_tags.setAdapter(tagAdapter);

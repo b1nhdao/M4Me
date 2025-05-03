@@ -1,8 +1,6 @@
 package com.example.m4me.activity;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -22,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.m4me.R;
-import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
+import com.example.m4me.adapter.SongPlaylistAdapter;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.User;
@@ -40,7 +38,6 @@ import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.datatype.Artwork;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -69,7 +66,7 @@ public class PlaylistActivity extends AppCompatActivity {
 
     private User mUser = new User();
 
-    private SongAdapter_Playlist_Vertically adapter;
+    private SongPlaylistAdapter adapter;
 
     private int specialCode;
 
@@ -98,7 +95,7 @@ public class PlaylistActivity extends AppCompatActivity {
                     Glide.with(this).load(playlist.getThumbnailURL()).into(img_playlistThumbnail);
                 }
 
-                adapter = new SongAdapter_Playlist_Vertically(this, songList, 1, specialCode, playlist.getID());
+                adapter = new SongPlaylistAdapter(this, songList, 1, specialCode, playlist.getID());
                 user = mAuth.getCurrentUser();
 
                 getPlaylistFromDatabaseByPlaylistID(playlist.getID());
@@ -110,7 +107,7 @@ public class PlaylistActivity extends AppCompatActivity {
                 tv_playlistTitle.setText("cac bai hat da tai");
 
                 songList = getDownloadedSongs();
-                adapter = new SongAdapter_Playlist_Vertically(this, songList, 3);
+                adapter = new SongPlaylistAdapter(this, songList, 3);
             }
 
             rv_song.setLayoutManager(new LinearLayoutManager(this));

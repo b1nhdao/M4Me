@@ -32,7 +32,7 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.m4me.R;
-import com.example.m4me.adapter.SongAdapter_Playlist_Vertically;
+import com.example.m4me.adapter.SongPlaylistAdapter;
 import com.example.m4me.model.Song;
 import com.example.m4me.model.Tag;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -75,7 +75,7 @@ public class UploadSongActivity extends AppCompatActivity {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     private RecyclerView rv_song;
-    private SongAdapter_Playlist_Vertically adapter;
+    private SongPlaylistAdapter adapter;
     private List<Song> createdSongList = new ArrayList<>();
 
     private static final String TAG = "cloudinary";
@@ -97,7 +97,7 @@ public class UploadSongActivity extends AppCompatActivity {
         initViews();
 
         getCreatedSongFromDatabase(user.getUid());
-        adapter = new SongAdapter_Playlist_Vertically(this, createdSongList, 2);
+        adapter = new SongPlaylistAdapter(this, createdSongList, 2);
         rv_song.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rv_song.setAdapter(adapter);
 

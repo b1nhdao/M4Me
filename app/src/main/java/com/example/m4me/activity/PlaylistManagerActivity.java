@@ -34,7 +34,7 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.m4me.R;
-import com.example.m4me.adapter.ItemAdapter_Global_Vertically;
+import com.example.m4me.adapter.ItemAdapter;
 import com.example.m4me.model.Playlist;
 import com.example.m4me.model.Tag;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -68,7 +68,7 @@ public class PlaylistManagerActivity extends AppCompatActivity {
 
     private List<Playlist> playlistCreatedList = new ArrayList<>();
 
-    private ItemAdapter_Global_Vertically adapter;
+    private ItemAdapter adapter;
 
     private Dialog dialog;
 
@@ -103,7 +103,7 @@ public class PlaylistManagerActivity extends AppCompatActivity {
         rv_playlist = findViewById(R.id.rv_playlist);
 
         getUserPlaylists(user.getUid());
-        adapter = new ItemAdapter_Global_Vertically(this, playlistCreatedList, ItemAdapter_Global_Vertically.Type.PLAYLIST, 1);
+        adapter = new ItemAdapter(this, playlistCreatedList, ItemAdapter.Type.PLAYLIST, 1);
         rv_playlist.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         rv_playlist.setAdapter(adapter);
 
@@ -292,7 +292,7 @@ public class PlaylistManagerActivity extends AppCompatActivity {
 
         // Create dialog builder
         AlertDialog.Builder builder = new AlertDialog.Builder(PlaylistManagerActivity.this);
-        builder.setTitle("Select Tags");
+        builder.setTitle("Chọn thể loại");
 
         // Set multiple choice items
         builder.setMultiChoiceItems(tagNames, checkedTags, new DialogInterface.OnMultiChoiceClickListener() {
